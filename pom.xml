@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>org.iskm.admin</groupId>
-	<artifactId>web</artifactId>
+	<artifactId>IskmAdminApp</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>web</name>
 	<description>Iskm Proddutur Website</description>
