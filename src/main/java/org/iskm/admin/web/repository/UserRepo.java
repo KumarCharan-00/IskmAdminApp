@@ -7,6 +7,6 @@ public interface UserRepo extends JpaRepository<User, String> {
 
     @Override
     <S extends User> S save(S user);
-
+    
     <T> T findUserByUserId(String userId, Class<T> classType);
 }
