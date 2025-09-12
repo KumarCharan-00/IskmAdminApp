@@ -1,0 +1,32 @@
+  .btn-subtle-primary {
+    background-color: #e3f2fd;
+    color: #0d6efd;
+    border: 1px solid #0d6efd;
+  }
+
+  .btn-subtle-primary:hover {
+    background-color: #0d6efd;
+    color: white;
+  }
+
+  .btn-subtle-success {
+    background-color: #e9f7ef;
+    color: #198754;
+    border: 1px solid #198754;
+  }
+
+  .btn-subtle-success:hover {
+    background-color: #198754;
+    color: white;
+  }
+
+  .btn-subtle-warning {
+    background-color: #fff8e1;
+    color: #ffc107;
+    border: 1px solid #ffc107;
+  }
+
+  .btn-subtle-warning:hover {
+    background-color: #ffc107;
+    color: black;
+  }

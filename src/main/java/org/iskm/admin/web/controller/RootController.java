@@ -4,7 +4,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
-public class PublicRootController {
+public class RootController {
 
     @GetMapping("/")
     public String root() {
@@ -18,6 +18,6 @@ public class PublicRootController {
 
     @GetMapping("/dashboard")
     public String dashboard() {
-        return "/public/dashboard.html";
+        return "/protected/dashboard.html";
     }
 }
