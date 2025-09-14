@@ -80,16 +80,18 @@ public class UserService {
         content.setStatus(request.getStatus() != null ? request.getStatus() : "draft");
 
         List<Image> imageList = new ArrayList<>();
-        MultipartFile file = request.getImage();
+        var imageFiles = request.getImages();
 
-        if (file != null && !file.isEmpty()) {
-            try {
-                Image image = new Image();
-                image.setImageData(file.getBytes()); 
-                image.setContent(content);
-                imageList.add(image);
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to process image", e);
+        for(MultipartFile imageFile : imageFiles) {
+            if (imageFile != null && !imageFile.isEmpty()) {
+                try {
+                    Image image = new Image();
+                    image.setImageData(imageFile.getBytes());
+                    image.setContent(content);
+                    imageList.add(image);
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to process image", e);
+                }
             }
         }
 
