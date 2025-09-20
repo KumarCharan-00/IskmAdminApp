@@ -1,12 +1,9 @@
 package org.iskm.admin.web.service;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-
-import jakarta.servlet.http.Cookie;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Predicate;
+import lombok.extern.slf4j.Slf4j;
 import org.iskm.admin.web.dto.res.AddUserDTO;
 import org.iskm.admin.web.dto.res.AddUserResponse;
 import org.iskm.admin.web.dto.res.ContentDTO;
@@ -21,15 +18,18 @@ import org.iskm.admin.web.repository.ContentRepository;
 import org.iskm.admin.web.repository.UserRepo;
 import org.iskm.admin.web.repository.UserRepository;
 import org.iskm.admin.web.util.CommonUtil;
-import org.iskm.admin.web.util.Constants;
 import org.iskm.admin.web.util.PasswordUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.persistence.EntityNotFoundException;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -98,15 +98,25 @@ public class UserService {
         content.setImages(imageList);
         contentRepository.save(content);
     }
-    
-    public List<Content> getAllContent() {
-        return contentRepository.findAll();
+
+
+    public List<Content> getContentBy(String byStatus, LocalDateTime from, LocalDateTime to) {
+        Specification<Content> spec = (root, query, builder) -> {
+            var predicates = new ArrayList<Predicate>();
+            if (byStatus != null && !byStatus.isBlank()) {
+                var status = root.get("status");
+                var lowerCaseStatus = builder.lower(status.as(String.class));
+                predicates.add(builder.equal(lowerCaseStatus, byStatus.toLowerCase()));
+            }
+            if (to != null) predicates.add(builder.lessThanOrEqualTo(root.get("createdAt"), to));
+            if (from != null) predicates.add(builder.greaterThanOrEqualTo(root.get("createdAt"), from));
+            return builder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return contentRepository.findAll(spec);
     }
 
 
-    public List<Content> getContentByStatus(String status) {
-        return contentRepository.findByStatusIgnoreCase(status);
-    }
     public ContentDTO toContentDTO(Content content) {
         ContentDTO dto = new ContentDTO();
         dto.setId(content.getId());

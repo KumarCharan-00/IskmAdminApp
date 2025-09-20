@@ -3,6 +3,7 @@ package org.iskm.admin.web.controller;
 import jakarta.servlet.http.HttpServletResponse;
 import org.iskm.admin.web.dto.res.AddUserDTO;
 import org.iskm.admin.web.dto.res.ContentDTO;
+import org.iskm.admin.web.dto.res.FetchContentResponse;
 import org.iskm.admin.web.dto.res.Response;
 import org.iskm.admin.web.model.*;
 import org.iskm.admin.web.service.UserService;
@@ -13,6 +14,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -61,20 +63,17 @@ public class AdminController {
     }
     
     @GetMapping("/content")
-    public ResponseEntity<List<ContentDTO>> getAllContent() {
-        List<ContentDTO> dtos = userService.getAllContent().stream()
+    public ResponseEntity<FetchContentResponse> getAllContent(@RequestParam(required = false) String status,
+                                                          @RequestParam(required = false) LocalDateTime from,
+                                                          @RequestParam(required = false) LocalDateTime to) {
+        var response = new FetchContentResponse();
+        var dtoList = userService.getContentBy(status, from, to).stream()
             .map(userService::toContentDTO)
             .toList();
-        return ResponseEntity.ok(dtos);
-    }
-
-
-    @GetMapping("/status/{status}")
-    public ResponseEntity<List<ContentDTO>> getContentByStatus(@PathVariable String status) {
-        List<ContentDTO> dtos = userService.getContentByStatus(status).stream()
-                .map(userService::toContentDTO)
-                .toList();
-            return ResponseEntity.ok(dtos);
+        var count = dtoList.size();
+        response.setContent(dtoList);
+        response.setCount(count);
+        return ResponseEntity.ok(response);
     }
     
     @PutMapping("/{id}")
