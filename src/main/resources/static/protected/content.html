@@ -4,9 +4,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Content Dashboard</title>
+
+  <!-- jQuery (needed for datepicker only) -->
+  <script defer src="https://code.jquery.com/jquery-3.7.1.js"></script>
+
+  <!-- Bootstrap Core -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <link href="css/content.css" rel="stylesheet" />
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Bootstrap Datepicker -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.standalone.min.css" rel="stylesheet">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+
+  <!-- DataTables v2 (vanilla JS) -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.min.css"/>
+  <script defer src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>
+  <script defer src="https://cdn.datatables.net/2.3.4/js/dataTables.bootstrap5.min.js"></script>
+
+  <script defer src="../protected/js/content.js"></script>
+  <link href="../protected/css/content.css" rel="stylesheet" />
 </head>
 <body class="bg-light">
   <div class="container py-5">
@@ -15,9 +34,7 @@
       <button type="button" id="btn-upload" class="btn btn-subtle-primary"
               data-bs-toggle="collapse" data-bs-target="#output" onclick="uploadContent()">Upload New Content</button>
       <button type="button" id="btn-show-uploaded" class="btn btn-subtle-primary"
-              data-bs-toggle="collapse" data-bs-target="#output" onclick="showUploaded()">Show Uploaded Content</button>
-      <button type="button" id="btn-show-drafts" class="btn btn-subtle-primary"
-              data-bs-toggle="collapse" data-bs-target="#output" onclick="showDrafts()">Show Drafts</button>
+              data-bs-toggle="collapse" data-bs-target="#output" onclick="showUploadedContent('all')">Show Uploaded Content</button>
     </div>
     <div id="add-content" class="output collapse mt-3 p-4 bg-white border rounded shadow-sm">
       <form id="contentUploadForm" action="/content" method="post" enctype="multipart/form-data">
@@ -41,7 +58,7 @@
         <ul id="imageList" class="list-group mb-3 flex-wrap flex-row"></ul>
         <!-- [END] Image Upload -->
         <div id="imagePreview" class="carousel slide">
-          <div class="carousel-inner " style="background-color: #202123"></div>
+          <div class="carousel-inner" style="background-color: #202123"></div>
             <button class="carousel-control-prev" type="button" data-bs-target="#imagePreview" data-bs-slide="prev">
               <span class="carousel-control-prev-icon" aria-hidden="true"></span>
               <span class="visually-hidden">Previous</span>
@@ -60,10 +77,53 @@
         </div>
       </form>
     </div>
-    <div id="view-content" class="output collapse mt-3 p-4 bg-white border rounded shadow-sm">
-
+    <div id="view-content" class="output collapse">
+      <div class="d-flex flex-column justify-content-center align-items-start
+            flex-md-row justify-content-md-end align-items-md-center gap-2">
+        <div class="d-inline-flex flex-column align-items-start me-auto mt-3">
+        <div class="btn-group shadow-sm me-auto" role="group" aria-label="Content actions">
+          <button class="btn btn-subtle-primary dropdown-toggle" type="button"
+                  data-bs-toggle="dropdown" aria-expanded="false">
+            Status
+          </button>
+          <ul class="status-options dropdown-menu">
+            <li class="dropdown-item">Published</li>
+            <li class="dropdown-item">Drafts</li>
+            <li class="dropdown-item">Expired</li>
+          </ul>
+        </div>
+        </div>
+        <div class="d-inline-flex flex-column flex-sm-row mt-3 gap-2">
+          <div class="startDatePicker input-group" style="max-width: 14rem;min-width: 11rem;">
+            <input type="text" class="calendarInput form-control border-secondary-subtle shadow-sm" id="calendarStartDate" placeholder="Start Date">
+            <label for="calendarStartDate" class="visually-hidden">Start Date</label>
+            <span class="input-group-text border-secondary-subtle shadow-sm" onclick="clearStartDate()"><i class="bi bi-trash"></i></span>
+          </div>
+          <div class="endDatePicker input-group" style="max-width: 14rem;min-width: 11rem;">
+            <input type="text" class="calendarInput form-control border-secondary-subtle shadow-sm" id="calendarEndDate" placeholder="End Date">
+            <label for="calendarEndDate" class="visually-hidden">End Date</label>
+            <span class="input-group-text border-secondary-subtle shadow-sm" onclick="clearEndDate()"><i class="bi bi-trash"></i></span>
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline-secondary mt-3" onclick="showUploadedContent('published')">Apply</button>
+      </div>
+      <div class="selected-item-list d-flex flex-row justify-content-start align-items-center gap-2"></div>
+      <div class="table-responsive mt-3 p-4 bg-white border rounded shadow-sm">
+        <table id="contentTable" class="table ">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Title</th>
+              <th scope="col">State</th>
+              <th scope="col">Actions</th>
+              <th scope="col">Images</th>
+            </tr>
+          </thead>
+          <tbody class="content-data">
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
-  <script src="js/content.js"></script>
 </body>
 </html>

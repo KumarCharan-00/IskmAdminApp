@@ -10,7 +10,9 @@
     border: 1px solid #444447;
   }
 
-  .btn-subtle-primary.active {
+  .btn-subtle-primary.active,
+  .btn-subtle-primary:active,
+  .btn-subtle-primary:focus {
     background-color: #202123;
     color: white;
     border: 1px solid #444447;

@@ -16,8 +16,8 @@ public class RootController {
         return "/public/login.html";
     }
 
-    @GetMapping("/dashboard")
+    @GetMapping("/view-content")
     public String dashboard() {
-        return "/protected/dashboard.html";
+        return "/protected/content.html";
     }
 }

@@ -78,7 +78,7 @@ public class AdminController {
     
     @PutMapping("/{id}")
     public ResponseEntity<String> updateContent(@PathVariable Long id,
-                                                    @RequestBody ContentUpdateRequest request) {
+                                                @RequestBody ContentUpdateRequest request) {
         userService.updateContent(id, request);
         return ResponseEntity.ok("Content updated successfully");
     }
