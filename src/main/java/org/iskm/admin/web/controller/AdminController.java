@@ -1,21 +1,34 @@
 package org.iskm.admin.web.controller;
 
-import jakarta.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
+
 import org.iskm.admin.web.dto.res.AddUserDTO;
 import org.iskm.admin.web.dto.res.ContentDTO;
 import org.iskm.admin.web.dto.res.FetchContentResponse;
 import org.iskm.admin.web.dto.res.Response;
-import org.iskm.admin.web.model.*;
+import org.iskm.admin.web.model.AuthenticationRequest;
+import org.iskm.admin.web.model.AuthenticationResponse;
+import org.iskm.admin.web.model.ContentRequest;
+import org.iskm.admin.web.model.ContentUpdateRequest;
+import org.iskm.admin.web.model.PasswordUpdateRequest;
 import org.iskm.admin.web.service.UserService;
 import org.iskm.admin.web.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 public class AdminController {
@@ -58,8 +71,12 @@ public class AdminController {
     
     @PostMapping("/content")
     public ResponseEntity<String> addContent(@ModelAttribute ContentRequest contentRequest) {
-    	userService.saveContent(contentRequest);
-        return ResponseEntity.ok("Content saved successfully");
+    	try {
+    		userService.saveContent(contentRequest);
+            return ResponseEntity.ok("Content saved successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Unexpected error: " + e.getMessage());
+        }
     }
     
     @GetMapping("/content")
@@ -67,7 +84,7 @@ public class AdminController {
                                                           @RequestParam(required = false) LocalDateTime from,
                                                           @RequestParam(required = false) LocalDateTime to) {
         var response = new FetchContentResponse();
-        var dtoList = userService.getContentBy(status, from, to).stream()
+        var dtoList = userService.getContent(status, from, to).stream()
             .map(userService::toContentDTO)
             .toList();
         var count = dtoList.size();
@@ -76,15 +93,15 @@ public class AdminController {
         return ResponseEntity.ok(response);
     }
     
-    @PutMapping("/{id}")
-    public ResponseEntity<String> updateContent(@PathVariable Long id,
-                                                @RequestBody ContentUpdateRequest request) {
-        userService.updateContent(id, request);
-        return ResponseEntity.ok("Content updated successfully");
+    @PatchMapping("content/{id}")
+    public ResponseEntity<ContentDTO> patchContentById(@PathVariable String id,
+                                                    @RequestBody ContentUpdateRequest request) {
+    	ContentDTO content = userService.partialUpdateById(id, request);
+        return ResponseEntity.ok(content);
     }
     
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteContent(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteContent(@PathVariable String id) {
     	userService.deleteContent(id);
         return ResponseEntity.noContent().build();
     }

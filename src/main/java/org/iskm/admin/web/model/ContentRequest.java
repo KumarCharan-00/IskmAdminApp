@@ -10,6 +10,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class ContentRequest {
+	private String id;
     private String pageTitle;
     private String pageContent;
     private List<MultipartFile> images;
