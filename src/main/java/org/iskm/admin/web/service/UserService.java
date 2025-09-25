@@ -1,9 +1,11 @@
 package org.iskm.admin.web.service;
 
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.criteria.Expression;
-import jakarta.persistence.criteria.Predicate;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.iskm.admin.web.dto.res.AddUserDTO;
 import org.iskm.admin.web.dto.res.AddUserResponse;
 import org.iskm.admin.web.dto.res.ContentDTO;
@@ -25,11 +27,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.Predicate;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -65,23 +65,32 @@ public class UserService {
     
     @Transactional
     public void updatePassword(String userName, String newPassword) {
+    	try {
         User user = userRepository.findByUsername(userName)
             .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         String hashedPassword = (PasswordUtil.encodePassword(newPassword));
         user.setPassword(hashedPassword);
         userRepository.save(user);
+    	}catch(Exception ex) {
+    		log.info("update password failed with exception :{}",ex);
+    	}
     }
     
     public void saveContent(ContentRequest request) {
         Content content = new Content();
+        content.setId(CommonUtil.generateUUID());
         content.setPageTitle(request.getPageTitle());
         content.setPageContent(request.getPageContent());
         content.setStatus(request.getStatus() != null ? request.getStatus() : "draft");
+        if(null == request.getImages()) {
+        	log.info("image should not be nulll");
+        	throw new NullPointerException();
+        }
 
         List<Image> imageList = new ArrayList<>();
         var imageFiles = request.getImages();
-
+        try {
         for(MultipartFile imageFile : imageFiles) {
             if (imageFile != null && !imageFile.isEmpty()) {
                 try {
@@ -97,10 +106,14 @@ public class UserService {
 
         content.setImages(imageList);
         contentRepository.save(content);
+        } catch(Exception ex) {
+        	log.info("saving content to DB failed with the exception :{}" , ex);
+        }
     }
 
 
-    public List<Content> getContentBy(String byStatus, LocalDateTime from, LocalDateTime to) {
+    public List<Content> getContent(String byStatus, LocalDateTime from, LocalDateTime to) {
+    	try {
         Specification<Content> spec = (root, query, builder) -> {
             var predicates = new ArrayList<Predicate>();
             if (byStatus != null && !byStatus.isBlank()) {
@@ -114,6 +127,10 @@ public class UserService {
         };
 
         return contentRepository.findAll(spec);
+    	} catch(Exception ex) {
+    		log.info("fetching content failed with exception :{}", ex);
+    		return null;
+    	}
     }
 
 
@@ -139,22 +156,40 @@ public class UserService {
     }
     
     @Transactional
-    public Content updateContent(Long id, ContentUpdateRequest request) {
-        Content content = contentRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Content not found"));
-
-        content.setPageTitle(request.getPageTitle());
-        content.setPageContent(request.getPageContent());
-        content.setStatus(request.getStatus());
-
-        return contentRepository.save(content);
-    }
-    
-    @Transactional
-    public void deleteContent(Long id) {
+    public void deleteContent(String id) {
+    	try {
         if (!contentRepository.existsById(id)) {
             throw new EntityNotFoundException("Content not found");
         }
         contentRepository.deleteById(id);
+    	} catch(Exception ex) {
+    		log.info("deleting content failed with exception :{}", ex);
+    	}
     }
+    
+    @Transactional
+    public ContentDTO partialUpdateById(String id, ContentUpdateRequest request) {
+    	try {
+        Content content = contentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Content not found with id: " + id));
+
+        if (request.getPageTitle() != null) {
+            content.setPageTitle(request.getPageTitle());
+        }
+        if (request.getPageContent() != null) {
+            content.setPageContent(request.getPageContent());
+        }
+        if (request.getStatus() != null) {
+            content.setStatus(request.getStatus());
+        }
+
+        contentRepository.save(content);
+         return toContentDTO(content);
+        
+    	} catch(Exception ex) {
+    		log.info("updating content by id failed with exception :{}", ex);
+    		return null;
+    	}
+    }
+
 }

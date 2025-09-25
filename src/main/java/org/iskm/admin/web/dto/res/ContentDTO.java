@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ContentDTO {
-    private Long id;
+    private String id;
     private String pageTitle;
     private String pageContent;
     private String status;
