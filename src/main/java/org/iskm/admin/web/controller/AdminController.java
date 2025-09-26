@@ -81,8 +81,8 @@ public class AdminController {
     
     @GetMapping("/content")
     public ResponseEntity<FetchContentResponse> getAllContent(@RequestParam(required = false) String status,
-                                                          @RequestParam(required = false) LocalDateTime from,
-                                                          @RequestParam(required = false) LocalDateTime to) {
+                                                              @RequestParam(required = false) LocalDateTime from,
+                                                              @RequestParam(required = false) LocalDateTime to) {
         var response = new FetchContentResponse();
         var dtoList = userService.getContent(status, from, to).stream()
             .map(userService::toContentDTO)
@@ -93,14 +93,14 @@ public class AdminController {
         return ResponseEntity.ok(response);
     }
     
-    @PatchMapping("content/{id}")
+    @PatchMapping("/content/{id}")
     public ResponseEntity<ContentDTO> patchContentById(@PathVariable String id,
-                                                    @RequestBody ContentUpdateRequest request) {
+                                                       @RequestBody ContentUpdateRequest request) {
     	ContentDTO content = userService.partialUpdateById(id, request);
         return ResponseEntity.ok(content);
     }
     
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/content/{id}")
     public ResponseEntity<Void> deleteContent(@PathVariable String id) {
     	userService.deleteContent(id);
         return ResponseEntity.noContent().build();

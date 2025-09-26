@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (token) {
         console.log("JWT Token:", token);
-        window.location.href = "/dashboard";
+        window.location.href = "/view-content";
       } else {
         throw new Error("Token not received");
       }

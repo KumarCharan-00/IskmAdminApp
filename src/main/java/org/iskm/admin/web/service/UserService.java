@@ -73,41 +73,39 @@ public class UserService {
         user.setPassword(hashedPassword);
         userRepository.save(user);
     	}catch(Exception ex) {
-    		log.info("update password failed with exception :{}",ex);
+    		log.info("Update password failed with exception :: ",ex);
     	}
     }
     
     public void saveContent(ContentRequest request) {
-        Content content = new Content();
-        content.setId(CommonUtil.generateUUID());
-        content.setPageTitle(request.getPageTitle());
-        content.setPageContent(request.getPageContent());
-        content.setStatus(request.getStatus() != null ? request.getStatus() : "draft");
         if(null == request.getImages()) {
         	log.info("image should not be nulll");
         	throw new NullPointerException();
         }
-
         List<Image> imageList = new ArrayList<>();
+        Content content = new Content(
+                CommonUtil.generateUUID(),
+                request.getPageTitle(), request.getPageContent(),
+                request.getStatus() != null ? request.getStatus() : "draft",
+                LocalDateTime.now(), imageList
+        );
         var imageFiles = request.getImages();
         try {
-        for(MultipartFile imageFile : imageFiles) {
-            if (imageFile != null && !imageFile.isEmpty()) {
-                try {
-                    Image image = new Image();
-                    image.setImageData(imageFile.getBytes());
-                    image.setContent(content);
-                    imageList.add(image);
-                } catch (IOException e) {
-                    throw new RuntimeException("Failed to process image", e);
+            for(MultipartFile imageFile : imageFiles) {
+                if (imageFile != null && !imageFile.isEmpty()) {
+                    try {
+                        Image image = new Image();
+                        image.setImageData(imageFile.getBytes());
+                        image.setContent(content);
+                        imageList.add(image);
+                    } catch (IOException e) {
+                        throw new RuntimeException("Failed to process image", e);
+                    }
                 }
             }
-        }
-
-        content.setImages(imageList);
-        contentRepository.save(content);
+            contentRepository.save(content);
         } catch(Exception ex) {
-        	log.info("saving content to DB failed with the exception :{}" , ex);
+        	log.error("Saving content to DB failed with the exception :: " , ex);
         }
     }
 
@@ -128,7 +126,7 @@ public class UserService {
 
         return contentRepository.findAll(spec);
     	} catch(Exception ex) {
-    		log.info("fetching content failed with exception :{}", ex);
+    		log.error("Fetching content failed with exception ::", ex);
     		return null;
     	}
     }
@@ -163,7 +161,7 @@ public class UserService {
         }
         contentRepository.deleteById(id);
     	} catch(Exception ex) {
-    		log.info("deleting content failed with exception :{}", ex);
+    		log.error("deleting content failed with exception :: ", ex);
     	}
     }
     
@@ -173,13 +171,13 @@ public class UserService {
         Content content = contentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Content not found with id: " + id));
 
-        if (request.getPageTitle() != null) {
+        if (request.getPageTitle() != null && !request.getPageTitle().isBlank()) {
             content.setPageTitle(request.getPageTitle());
         }
-        if (request.getPageContent() != null) {
+        if (request.getPageContent() != null && !request.getPageContent().isBlank()) {
             content.setPageContent(request.getPageContent());
         }
-        if (request.getStatus() != null) {
+        if (request.getStatus() != null && !request.getStatus().isBlank()) {
             content.setStatus(request.getStatus());
         }
 
@@ -187,7 +185,7 @@ public class UserService {
          return toContentDTO(content);
         
     	} catch(Exception ex) {
-    		log.info("updating content by id failed with exception :{}", ex);
+    		log.error("Updating content by id failed with exception :: ", ex);
     		return null;
     	}
     }
