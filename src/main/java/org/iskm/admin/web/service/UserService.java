@@ -53,6 +53,7 @@ public class UserService {
         try {
             var creationTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"));
             addUserDTO.setPassword(PasswordUtil.encodePassword(addUserDTO.getPassword()));
+            addUserDTO.setUserId(CommonUtil.generateUUID());
             var userEntity = commonUtil.mapEntityData(addUserDTO, creationTime);
             repo.save(userEntity);
             res = new AddUserResponse(true);
