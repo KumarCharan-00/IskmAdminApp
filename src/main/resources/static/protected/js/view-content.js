@@ -71,8 +71,6 @@ function loadContent(filters) {
     return apiJson("GET", "/content", { queryParams: filters });
 }
 
-let data = new Map();
-
 function populateTable(res) {
     try {
         console.log("fulfilled");
@@ -81,11 +79,10 @@ function populateTable(res) {
         if (res.content && res.content.length > 0) {
             loadModalSkeleton();
             res.content.forEach((val, idx) => {
-                data.set(val.id, val);
-                console.log(`${idx} and ${data.get(val.id)}`)
-                console.log(data.get(val.id));
+                console.log(`${idx} and ${val}`)
+                console.log(val);
                 const tr = document.createElement('tr');
-                tr.innerHTML = mapToRow(data.get(val.id), idx);
+                tr.innerHTML = mapToRow(val, idx);
                 contentData.appendChild(tr);
             });
         }
@@ -144,6 +141,7 @@ function populateTable(res) {
 }
 
 const contentModal = {
+    idx: -1, 
     id: "",
     content: "",
     title: ""
@@ -157,7 +155,7 @@ function mapToRow(val, idx) {
          <td>${val.status}</td>
          <td>
             <a class="" href="#" data-bs-toggle="modal" data-bs-target="#viewContentModal" 
-                onclick="loadContentInModal('${val.id}', '${val.pageTitle}', '${val.pageContent}')">view</a>
+                onclick=" loadContentInModal(${idx}, '${val.id}', '${val.pageTitle}', '${val.pageContent}')">view</a>
          </td>
          <td></td>
         `;
@@ -173,16 +171,18 @@ function loadModalSkeleton() {
     const stateBtn = footer.querySelector(".modalStateBtn");
     const saveBtn = footer.querySelector(".saveModifiedContentBtn");
     if (closeBtn && stateBtn && saveBtn) {
-        let stateBtnLockHandler = createLockHandler(enableContentEditMode, 100);
+        let stateBtnLockHandler = createLockHandler(switchContentMode, 100);
         let closeBtnLockHandler = createLockHandler(closeContentModal, 200);
         let saveBtnLockHandler = createLockHandler(saveContentById, 1000);
         closeBtn.addEventListener("click", () => closeBtnLockHandler(contentModal.content));
         stateBtn.addEventListener("click", () => stateBtnLockHandler());
-        saveBtn.addEventListener("click", () => saveBtnLockHandler(contentModal.id, contentModal.content));
+        saveBtn.addEventListener("click",
+            () => saveBtnLockHandler(contentModal.idx, contentModal.id, contentModal.title, contentModal.content)
+        );
     }
 }
 
-function loadContentInModal(id, title, content) {
+function loadContentInModal(idx, id, title, content) {
     const viewContentModal = document.getElementById("viewContentModal");
     const label = viewContentModal.querySelector("#viewContentModalLabel");
     const body = viewContentModal.querySelector("#viewContentModalBody");
@@ -190,6 +190,7 @@ function loadContentInModal(id, title, content) {
         label.textContent = title;
         body.value = content;
     }
+    contentModal.idx = idx;
     contentModal.id = id;
     contentModal.title = title;
     contentModal.content = content;
@@ -232,13 +233,16 @@ function contentModified(flag) {
 
 let contentModifiedListener = () => { console.log("listener"); contentModified(true); }
 
-function enableContentEditMode() {
+let editMode = false;
+
+function switchContentMode() {
     const textArea = document.getElementById("viewContentModalBody");
     const contentBodyEditMode = document.querySelector(".modalStateBtn");
     if (textArea && contentBodyEditMode) {
         textArea.disabled = !textArea.disabled;
         contentBodyEditMode.textContent = textArea.disabled? "Edit": "Read-Only";
-        if (!textArea.disabled) {
+        editMode = !textArea.disabled;
+        if (editMode) {
             console.log("Adding input event listener");
             document.addEventListener("input", contentModifiedListener, { once: true });
         } else {
@@ -247,7 +251,7 @@ function enableContentEditMode() {
         }
     }
 }
-window.enableContentEditMode = enableContentEditMode;
+window.switchContentMode = switchContentMode;
 
 function closeContentModal(content) {
     const contentBody = document.getElementById("viewContentModalBody");
@@ -259,8 +263,9 @@ function closeContentModal(content) {
             return;
         }
     }
-    /* console.log("Removing input event listener");
-    document.removeEventListener("input", contentModifiedListener); */
+    if (editMode) {
+        switchContentMode();
+    }
     const modal = document.getElementById("viewContentModal");
     const modalInstance = window.bootstrap.Modal.getInstance(modal);
     console.log(modalInstance);
@@ -270,26 +275,36 @@ function closeContentModal(content) {
 }
 window.closeContentModal = closeContentModal;
 
-function saveContentById(contentId, content, title) {
-    const newContent = document.getElementById("viewContentModalBody");
-    const newTitle = document.getElementById("viewContentModalLabel").textContent;
+function saveContentById(idx, contentId, title, content) {
+    const bodyNode = document.getElementById("viewContentModalBody");
+    const titleNode = document.getElementById("viewContentModalLabel");
     let body = {};
-    if (content && newContent && content !== newContent.value) {
-        body.pageContent = newContent.value;
+    console.log(title, " == ", titleNode.textContent);
+    console.log(content, " == ", bodyNode.value);
+    if (content && bodyNode && content !== bodyNode.value) {
+        body.pageContent = bodyNode.value;
     }
-    if (title && newTitle && title !== newTitle) {
-        body.pageTitle = newTitle;
+    if (title && titleNode && title !== titleNode.textContent) {
+        body.pageTitle = titleNode.textContent;
     }
     const response = apiJson("PATCH", `/content/${contentId}`, { body })
-    response.then(json => popup(json));
+    response.then(json => popup(idx, json));
     // return response;
 }
 window.saveContentById = saveContentById
 
-function popup(json) {
+function popup(idx, json) {
     console.log(json);
     if (json && !json.errorMessage) {
-        data.set(json.id, json);
+        contentModal.content = json.pageContent;
+        contentModal.title = json.pageTitle;
+        const newContent = `<a class="" href="#" data-bs-toggle="modal" data-bs-target="#viewContentModal"
+                            onclick=" loadContentInModal(${idx}, '${json.id}', '${json.pageTitle.trim()}', '${json.pageContent}')">view</a>`;
+        const newData = contentTableDTInstance.row(idx).data();
+        newData[3] = newContent;
+        contentTableDTInstance.row(idx).data(newData).draw(false);
+        console.log(contentTableDTInstance.row(idx).data());
+        console.log(contentTableDTInstance.row(idx).node());
         contentModified(false);
     }
 }
