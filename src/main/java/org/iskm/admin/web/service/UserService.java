@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.iskm.admin.web.dto.res.AddUserDTO;
 import org.iskm.admin.web.dto.res.AddUserResponse;
@@ -14,11 +15,14 @@ import org.iskm.admin.web.dto.res.Response;
 import org.iskm.admin.web.model.ContentRequest;
 import org.iskm.admin.web.model.ContentUpdateRequest;
 import org.iskm.admin.web.model.entity.Content;
-import org.iskm.admin.web.model.entity.Image;
+import org.iskm.admin.web.model.entity.MobileImage;
 import org.iskm.admin.web.model.entity.User;
+import org.iskm.admin.web.model.entity.WebImage;
 import org.iskm.admin.web.repository.ContentRepository;
+import org.iskm.admin.web.repository.MobileImageRepository;
 import org.iskm.admin.web.repository.UserRepo;
 import org.iskm.admin.web.repository.UserRepository;
+import org.iskm.admin.web.repository.WebImageRepository;
 import org.iskm.admin.web.util.CommonUtil;
 import org.iskm.admin.web.util.PasswordUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,13 +43,19 @@ public class UserService {
 	 private final CommonUtil commonUtil;
 	 private final ContentRepository contentRepository;
 	 private final UserRepository userRepository;
+	 private final WebImageRepository webImageRepository;
+	 private final MobileImageRepository mobileImageRepository;
 	
 	@Autowired
-    public UserService(UserRepo repo,CommonUtil commonUtil, ContentRepository contentRepository, UserRepository userRepository) {
+	public UserService(UserRepo repo, CommonUtil commonUtil, ContentRepository contentRepository,
+			UserRepository userRepository, WebImageRepository webImageRepository,
+			MobileImageRepository mobileImageRepository) {
         this.repo = repo;
         this.commonUtil = commonUtil;
         this.contentRepository = contentRepository;
         this.userRepository = userRepository;
+        this.webImageRepository = webImageRepository;
+        this.mobileImageRepository = mobileImageRepository;
     }
 	
     public Response saveUser(AddUserDTO addUserDTO) {
@@ -78,37 +88,75 @@ public class UserService {
     	}
     }
     
-    public void saveContent(ContentRequest request) {
-        if(null == request.getImages()) {
-        	log.info("image should not be nulll");
-        	throw new NullPointerException();
-        }
-        List<Image> imageList = new ArrayList<>();
-        Content content = new Content(
-                CommonUtil.generateUUID(),
-                request.getPageTitle(), request.getPageContent(),
-                request.getStatus() != null ? request.getStatus() : "draft",
-                LocalDateTime.now(), imageList
-        );
-        var imageFiles = request.getImages();
-        try {
-            for(MultipartFile imageFile : imageFiles) {
-                if (imageFile != null && !imageFile.isEmpty()) {
-                    try {
-                        Image image = new Image();
-                        image.setImageData(imageFile.getBytes());
-                        image.setContent(content);
-                        imageList.add(image);
-                    } catch (IOException e) {
-                        throw new RuntimeException("Failed to process image", e);
-                    }
-                }
-            }
-            contentRepository.save(content);
-        } catch(Exception ex) {
-        	log.error("Saving content to DB failed with the exception :: " , ex);
-        }
+    public void saveContent(ContentRequest request, String channel) {
+    	 List<WebImage> webImageList = new ArrayList<>();
+         List<MobileImage> mobileImageList = new ArrayList<>();
+         Content content = new Content(
+               CommonUtil.generateUUID(),
+               request.getPageTitle(), request.getPageContent(),
+               request.getStatus() != null ? request.getStatus() : "draft",
+               LocalDateTime.now(), webImageList, mobileImageList
+       );
+    	if (channel.equalsIgnoreCase("web")) {
+    		savingWebContent(request, webImageList, content);
+    		
+    	} else {	
+    		savingMobileContent(request, mobileImageList, content);
+    		
+    	}
+    	
+        
     }
+
+	private void savingMobileContent(ContentRequest request, List<MobileImage> mobileImageList, Content content) {
+		if(null == request.getMobileImages()) {
+			log.info("image should not be nulll");
+			throw new NullPointerException();
+		}
+		var imageFiles = request.getMobileImages();
+		try {
+		    for(MultipartFile imageFile : imageFiles) {
+		        if (imageFile != null && !imageFile.isEmpty()) {
+		            try {
+		                MobileImage image = new MobileImage();
+		                image.setImageData(imageFile.getBytes());
+		                image.setContent(content);
+		                mobileImageList.add(image);
+		            } catch (IOException e) {
+		                throw new RuntimeException("Failed to process image", e);
+		            }
+		        }
+		    }
+		    contentRepository.save(content);
+		} catch(Exception ex) {
+			log.error("Saving content to DB failed with the exception :: " , ex);
+		}
+	}
+
+	private void savingWebContent(ContentRequest request, List<WebImage> webImageList, Content content) {
+		if(null == request.getWebImages()) {
+			log.info("image should not be nulll");
+			throw new NullPointerException();
+		}
+		var imageFiles = request.getWebImages();
+		try {
+		    for(MultipartFile imageFile : imageFiles) {
+		        if (imageFile != null && !imageFile.isEmpty()) {
+		            try {
+		                WebImage image = new WebImage();
+		                image.setImageData(imageFile.getBytes());
+		                image.setContent(content);
+		                webImageList.add(image);
+		            } catch (IOException e) {
+		                throw new RuntimeException("Failed to process image", e);
+		            }
+		        }
+		    }
+		    contentRepository.save(content);
+		} catch(Exception ex) {
+			log.error("Saving content to DB failed with the exception :: " , ex);
+		}
+	}
 
 
     public List<Content> getContent(String byStatus, LocalDateTime from, LocalDateTime to) {
@@ -140,17 +188,6 @@ public class UserService {
         dto.setPageContent(content.getPageContent());
         dto.setStatus(content.getStatus());
         dto.setCreatedAt(content.getCreatedAt());
-
-        List<ImageDTO> imageDTOs = content.getImages().stream().map(image -> {
-            ImageDTO img = new ImageDTO();
-            img.setId(image.getId());
-            img.setImageData(image.getImageData());
-            img.setExpiresAt(image.getExpiresAt());
-            img.setCreatedAt(image.getCreatedAt());
-            return img;
-        }).toList();
-
-        dto.setImages(imageDTOs);
         return dto;
     }
     
@@ -189,6 +226,30 @@ public class UserService {
     		log.error("Updating content by id failed with exception :: ", ex);
     		return null;
     	}
+    }
+    @Transactional(readOnly = true)
+    public List<ImageDTO> getWebImagesByContentId(String contentId) {
+        return webImageRepository.findByContentId(contentId)
+                .stream()
+                .map(image -> new ImageDTO(
+                        image.getId(),
+                        image.getImageData(),
+                        image.getExpiresAt(),
+                        image.getCreatedAt()
+                ))
+                .collect(Collectors.toList());
+    }
+    @Transactional(readOnly = true)
+    public List<ImageDTO> getMobileImagesByContentId(String contentId) {
+    	return mobileImageRepository.findByContentId(contentId)
+    			.stream()
+                .map(image -> new ImageDTO(
+                        image.getId(),
+                        image.getImageData(),
+                        image.getExpiresAt(),
+                        image.getCreatedAt()
+                ))
+                .collect(Collectors.toList());
     }
 
 }

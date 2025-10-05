@@ -1,55 +1,49 @@
 package org.iskm.admin.web.model.entity;
 
-import org.hibernate.proxy.HibernateProxy;
-
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
+
+import org.hibernate.proxy.HibernateProxy;
 
 @Entity
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "content")
-public class Content {
+@Table(name = "web_images")
+public class WebImage {
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @Column(name = "page_title", nullable = false)
-    private String pageTitle;
+    //@Lob
+    @Column(name = "image_data",columnDefinition = "BYTEA")
+    private byte[] imageData;
 
-    @Column(name = "page_content", nullable = false, columnDefinition = "TEXT")
-    private String pageContent;
-
-    @Column(name = "status", nullable = false)
-    private String status = "draft";
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @ToString.Exclude
-    @OneToMany(mappedBy = "content", cascade = CascadeType.ALL)
-    private List<WebImage> webImages = new ArrayList<>();
+    @ManyToOne
+    @JoinColumn(name = "content_id")
+    private Content content;
 
-    @ToString.Exclude
-    @OneToMany(mappedBy = "content", cascade = CascadeType.ALL)
-    private List<MobileImage> mobileImages = new ArrayList<>();
-    
     @Override
     public final boolean equals(Object o) {
         if (this == o) return true;
@@ -57,8 +51,8 @@ public class Content {
         Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
         Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
         if (thisEffectiveClass != oEffectiveClass) return false;
-        Content content = (Content) o;
-        return getId() != null && Objects.equals(getId(), content.getId());
+        WebImage image = (WebImage) o;
+        return getId() != null && Objects.equals(getId(), image.getId());
     }
 
     @Override
@@ -66,3 +60,4 @@ public class Content {
         return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
     }
 }
+

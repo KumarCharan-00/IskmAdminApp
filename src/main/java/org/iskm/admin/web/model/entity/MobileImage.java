@@ -24,8 +24,8 @@ import org.hibernate.proxy.HibernateProxy;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "images")
-public class Image {
+@Table(name = "mobile_images")
+public class MobileImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -51,7 +51,7 @@ public class Image {
         Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
         Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
         if (thisEffectiveClass != oEffectiveClass) return false;
-        Image image = (Image) o;
+        MobileImage image = (MobileImage) o;
         return getId() != null && Objects.equals(getId(), image.getId());
     }
 
