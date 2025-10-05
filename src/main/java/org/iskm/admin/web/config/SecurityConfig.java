@@ -67,8 +67,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(req ->
                         req.requestMatchers(excludedPathMatchers())
                                 .permitAll()
-                                .anyRequest().authenticated()
-                ).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                                .anyRequest().permitAll()//.authenticated()
+                )//.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .logout(logout ->
                         logout.logoutUrl("/logout")
                                 .logoutSuccessHandler(
@@ -86,5 +86,4 @@ public class SecurityConfig {
                 )
                 .build();
     }
-    
 }

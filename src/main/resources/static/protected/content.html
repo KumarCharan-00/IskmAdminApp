@@ -23,8 +23,10 @@
   <link rel="stylesheet" href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.min.css"/>
   <script defer src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>
   <script defer src="https://cdn.datatables.net/2.3.4/js/dataTables.bootstrap5.min.js"></script>
-
-  <script defer src="../protected/js/content.js"></script>
+  
+  <script type="module" src="../protected/js/common-util.js"></script>
+  <script type="module" src="../protected/js/upload-content.js"></script>
+  <script type="module" src="../protected/js/view-content.js"></script>
   <link href="../protected/css/content.css" rel="stylesheet" />
 </head>
 <body class="bg-light">
@@ -32,9 +34,9 @@
     <h1 class="text-left mb-4">Manage Content</h1>
     <div class="btn-group" role="group" aria-label="Content actions">
       <button type="button" id="btn-upload" class="btn btn-subtle-primary"
-              data-bs-toggle="collapse" data-bs-target="#output" onclick="uploadContent()">Upload New Content</button>
+              data-bs-toggle="collapse" data-bs-target="#output" onclick="addContent()">Upload New Content</button>
       <button type="button" id="btn-show-uploaded" class="btn btn-subtle-primary"
-              data-bs-toggle="collapse" data-bs-target="#output" onclick="showUploadedContent('all')">Show Uploaded Content</button>
+              data-bs-toggle="collapse" data-bs-target="#output" onclick="viewContent('all')">Show Uploaded Content</button>
     </div>
     <div id="add-content" class="output collapse mt-3 p-4 bg-white border rounded shadow-sm">
       <form id="contentUploadForm" action="/content" method="post" enctype="multipart/form-data">
@@ -59,14 +61,14 @@
         <!-- [END] Image Upload -->
         <div id="imagePreview" class="carousel slide">
           <div class="carousel-inner" style="background-color: #202123"></div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#imagePreview" data-bs-slide="prev">
-              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-              <span class="visually-hidden">Previous</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#imagePreview" data-bs-slide="next">
-              <span class="carousel-control-next-icon" aria-hidden="true"></span>
-              <span class="visually-hidden">Next</span>
-            </button>
+          <button class="carousel-control-prev" type="button" data-bs-target="#imagePreview" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#imagePreview" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
         </div>
         <div class="mt-3">
           <div class="d-flex justify-content-end gap-2" aria-label="Submit Page Content">
@@ -105,10 +107,37 @@
             <span class="input-group-text border-secondary-subtle shadow-sm" onclick="clearEndDate()"><i class="bi bi-trash"></i></span>
           </div>
         </div>
-        <button type="button" class="btn btn-outline-secondary mt-3" onclick="showUploadedContent('published')">Apply</button>
+        <button type="button" class="btn btn-outline-secondary mt-3" onclick="viewContent('published')">Apply</button>
       </div>
       <div class="selected-item-list d-flex flex-row justify-content-start align-items-center gap-2"></div>
       <div class="table-responsive mt-3 p-4 bg-white border rounded shadow-sm">
+        <div class="modal fade" id="viewContentModal" tabindex="-1" aria-labelledby="viewContentModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h1 class="modal-title fs-5 text-dark contentModalTitle">
+                  <label for="viewContentModalInput" id="viewContentModalLabel"></label>
+                  <span id="viewContentModalInputGrp" class="input-group visually-hidden">
+                    <input type="text" id="viewContentModalInput" class="input-text form-control" placeholder readonly>
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="editContentModalTitle(true)"><i class="bi bi-check2"></i></button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="editContentModalTitle(false)"><i class="bi bi-x"></i></button>
+                  </span>
+                  <span id="editContentModalTitleIcon" class="text-dark" onclick="editContentModalTitle()"><a href="#"><i class="bi bi-pencil-square"></i></a></span>
+                </h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div>
+                <label for="viewContentModalBody" class="visually-hidden">Uploaded Content</label>
+                <textarea class="modal-body form-control" placeholder id="viewContentModalBody" style="height: 50vh" disabled></textarea>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger btn-sm modalCloseBtn" data-bs-target="#viewContentModal" aria-label="Close">Close</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm modalStateBtn">Edit</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm saveModifiedContentBtn" disabled>Save changes</button>
+              </div>
+            </div>
+          </div>
+        </div>
         <table id="contentTable" class="table ">
           <thead>
             <tr>
@@ -120,6 +149,60 @@
             </tr>
           </thead>
           <tbody class="content-data">
+            <th scope="row">Ram</th>
+            <td>some-title</td>
+            <td>Published</td>
+            <td>
+              <!--<a class="" href="#" data-bs-toggle="modal" data-bs-target="#viewContentModal">view</a>
+              <div class="modal fade" id="viewContentModal" tabindex="-1" aria-labelledby="viewContentModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h1 class="modal-title fs-5 text-dark contentModalTitle">
+                        <label for="viewContentModalInput" id="viewContentModalLabel"></label>
+                        <span id="viewContentModalInputGrp" class="input-group visually-hidden">
+                          <input type="text" id="viewContentModalInput" class="input-text form-control" placeholder readonly>
+                          <button type="button" class="btn btn-outline-primary btn-sm" onclick="editContentModalTitle(true)"><i class="bi bi-check2"></i></button>
+                          <button type="button" class="btn btn-outline-danger btn-sm" onclick="editContentModalTitle(false)"><i class="bi bi-x"></i></button>
+                        </span>
+                        <span id="editContentModalTitleIcon" class="text-dark" onclick="editContentModalTitle()"><a href="#"><i class="bi bi-pencil-square"></i></a></span>
+                      </h1>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div>
+                      <label for="viewContentModalBody" class="visually-hidden">Uploaded Content</label>
+                      <textarea class="modal-body form-control" placeholder id="viewContentModalBody"
+                                style="height: 50vw" disabled>
+                        Why the Calendar Inputs Stretch form-control by default is width: 100%
+                          Bootstrap’s .form-control class is designed to fill its container.
+                          So if the parent is a flex item with available space, the input will stretch.
+                          Flex container behavior
+                          When you wrap the calendar inputs and Apply button inside a flex container (d-inline-flex or d-flex), each child (like the input group) becomes a flex item.
+                          If you don’t constrain the width, the input will expand to fill the row.
+                          Responsive shrinking
+                          On smaller screens, the flex container wraps or compresses, so the inputs shrink accordingly. /n
+
+                        Why the Calendar Inputs Stretch
+                          form-control by default is width: 100%
+                          Bootstrap’s .form-control class is designed to fill its container.
+                          So if the parent is a flex item with available space, the input will stretch.
+                          Flex container behavior
+                          When you wrap the calendar inputs and Apply button inside a flex container (d-inline-flex or d-flex), each child (like the input group) becomes a flex item.
+                          If you don’t constrain the width, the input will expand to fill the row.
+                          Responsive shrinking
+                          On smaller screens, the flex container wraps or compresses, so the inputs shrink accordingly.
+                      </textarea>
+                      </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-outline-danger btn-sm" data-bs-target="#viewContentModal" aria-label="Close" onclick="closeContentModal('')">Close</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm editContentBody" onclick="enableContentEditMode()">Edit</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm editContentSaveOption" onclick="saveContentById(id)" disabled>Save changes</button>
+                    </div>
+                  </div>
+                </div>
+              </div>-->
+            </td>
+            <td></td>
           </tbody>
         </table>
       </div>
