@@ -13,6 +13,7 @@ public class ContentRequest {
 	private String id;
     private String pageTitle;
     private String pageContent;
-    private List<MultipartFile> images;
+    private List<MultipartFile> webImages;
+    private List<MultipartFile> mobileImages;
     private String status;
 }

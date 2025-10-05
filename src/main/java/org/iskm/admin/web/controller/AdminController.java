@@ -1,9 +1,11 @@
 package org.iskm.admin.web.controller;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.iskm.admin.web.dto.res.AddUserDTO;
 import org.iskm.admin.web.dto.res.ContentDTO;
+import org.iskm.admin.web.dto.res.ContentDTO.ImageDTO;
 import org.iskm.admin.web.dto.res.FetchContentResponse;
 import org.iskm.admin.web.dto.res.Response;
 import org.iskm.admin.web.model.AuthenticationRequest;
@@ -69,10 +71,10 @@ public class AdminController {
         return ResponseEntity.ok("Password updated successfully.");
     }
     
-    @PostMapping("/content")
-    public ResponseEntity<String> addContent(@ModelAttribute ContentRequest contentRequest) {
+    @PostMapping("/content/{channel}")
+    public ResponseEntity<String> addContent(@ModelAttribute ContentRequest contentRequest,@PathVariable String channel) {
     	try {
-    		userService.saveContent(contentRequest);
+    		userService.saveContent(contentRequest,channel);
             return ResponseEntity.ok("Content saved successfully");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Unexpected error: " + e.getMessage());
@@ -105,4 +107,24 @@ public class AdminController {
     	userService.deleteContent(id);
         return ResponseEntity.noContent().build();
     }
+    
+    @GetMapping("/webImages/{contentId}")
+    public ResponseEntity<List<ImageDTO>> getWebImagesByContentId(@PathVariable String contentId) {
+    	List<ImageDTO> images = userService.getWebImagesByContentId(contentId);
+        if (images.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(images);
+    }
+    @GetMapping("/mobileImages/{contentId}")
+    public ResponseEntity<List<ImageDTO>> getMobileImagesByContentId(@PathVariable String contentId) {
+    	List<ImageDTO> images = userService.getMobileImagesByContentId(contentId);
+    	if (images.isEmpty()) {
+    		return ResponseEntity.noContent().build();
+    	}
+    	return ResponseEntity.ok(images);
+    }
+    
+    
+    
 }
