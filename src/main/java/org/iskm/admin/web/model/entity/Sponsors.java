@@ -7,12 +7,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+
 
 @Entity
-@Getter
-@Setter
 @Data
 @Table(name = "sponsors")
 public class Sponsors {
@@ -27,19 +24,20 @@ public class Sponsors {
 	@Column(nullable = false, unique = true)
 	private String email;
 	
+	@Column(nullable = true, unique = true)
 	private Long phoneNumber;
 	
-	private String fullAdress;
+	private String fullAddress;
 	
 	@Column(nullable = false)
-	private Long amount;
+	private Double amount;
 	
 	private String razorpayOrderStatus;
 		
 	@Column(name = "razorpay_order_id")
 	private String razorpayOrderId;
 	
-	private String currency;
+	private String currency = "INR";
 	
 	private String isPaymentDone;
 

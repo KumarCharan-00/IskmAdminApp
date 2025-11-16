@@ -159,21 +159,22 @@ public class UserService {
 	}
 
 
-    public List<Content> getContent(String byStatus, LocalDateTime from, LocalDateTime to) {
+    public List<Content> getContent(List<String> byStatus, LocalDateTime from, LocalDateTime to) {
+        System.out.println("from :: " + from + " to :: " + to + " byStatus :: " + byStatus);
     	try {
-        Specification<Content> spec = (root, query, builder) -> {
-            var predicates = new ArrayList<Predicate>();
-            if (byStatus != null && !byStatus.isBlank()) {
-                var status = root.get("status");
-                var lowerCaseStatus = builder.lower(status.as(String.class));
-                predicates.add(builder.equal(lowerCaseStatus, byStatus.toLowerCase()));
-            }
-            if (to != null) predicates.add(builder.lessThanOrEqualTo(root.get("createdAt"), to));
-            if (from != null) predicates.add(builder.greaterThanOrEqualTo(root.get("createdAt"), from));
-            return builder.and(predicates.toArray(new Predicate[0]));
-        };
-
-        return contentRepository.findAll(spec);
+            Specification<Content> spec = (root, query, builder) -> {
+                var predicates = new ArrayList<Predicate>();
+                if (byStatus != null && !byStatus.isEmpty()) {
+                    var status = root.get("status");
+                    var lowerCaseStatus = builder.lower(status.as(String.class));
+                    var lowerCaseStatuses = byStatus.stream().map(String::toLowerCase).toList();
+                    predicates.add(lowerCaseStatus.in(lowerCaseStatuses));
+                }
+                if (to != null) predicates.add(builder.lessThanOrEqualTo(root.get("createdAt"), to));
+                if (from != null) predicates.add(builder.greaterThanOrEqualTo(root.get("createdAt"), from));
+                return builder.and(predicates.toArray(new Predicate[0]));
+            };
+            return contentRepository.findAll(spec);
     	} catch(Exception ex) {
     		log.error("Fetching content failed with exception ::", ex);
     		return null;
@@ -220,13 +221,14 @@ public class UserService {
         }
 
         contentRepository.save(content);
-         return toContentDTO(content);
+        return toContentDTO(content);
         
     	} catch(Exception ex) {
     		log.error("Updating content by id failed with exception :: ", ex);
     		return null;
     	}
     }
+
     @Transactional(readOnly = true)
     public List<ImageDTO> getWebImagesByContentId(String contentId) {
         return webImageRepository.findByContentId(contentId)
@@ -239,6 +241,7 @@ public class UserService {
                 ))
                 .collect(Collectors.toList());
     }
+
     @Transactional(readOnly = true)
     public List<ImageDTO> getMobileImagesByContentId(String contentId) {
     	return mobileImageRepository.findByContentId(contentId)

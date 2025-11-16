@@ -1,18 +1,24 @@
-import { setActive, showOutputPanel, apiJson, createLockHandler } from "./common-util.js";
+import {
+    setActive,
+    showOutputPanel,
+    apiJson,
+    createLockHandler,
+} from "./common-util.js";
 
 // Event Listeners
-document.addEventListener('DOMContentLoaded', dateRangePicker);
+document.addEventListener("DOMContentLoaded", dateRangePicker);
 document.addEventListener("DOMContentLoaded", selectedStatus);
 
 let contentTableDTInstance;
 
 function viewContent(status, startDate, endDate) {
-    setActive('btn-show-uploaded');
+    setActive("btn-show-uploaded");
     showOutputPanel("view-content");
     let filters = {};
-    if (status && status !== 'all') filters.status = status;
+    if (status && status.size > 0) filters.status = status.values().toArray();
     if (startDate) filters.from = startDate;
     if (endDate) filters.to = endDate;
+    console.log("final ", filters);
     loadContent(filters).then(populateTable);
 }
 window.viewContent = viewContent;
@@ -25,18 +31,21 @@ function selectedStatus() {
 
     const status = statusList.querySelectorAll(".dropdown-item");
     console.log(status);
-    status.forEach(item => {
+    status.forEach((item) => {
         console.log("Adding Click");
         item.addEventListener("click", () => {
             item.classList.toggle("selected");
             console.log("Listening Click on ", item.textContent);
             const label = item.textContent.trim().toUpperCase();
-            const badgePresent = badgeContainer.querySelector(`.badge[data-status="${label}"]`);
+            const badgePresent = badgeContainer.querySelector(
+                `.badge[data-status="${label}"]`
+            );
 
             if (item.classList.contains("selected") && !badgePresent) {
                 const span = document.createElement("span");
                 span.textContent = label;
-                span.className = "badge bg-secondary text-bg-secondary me-1 mt-2";
+                span.className =
+                    "badge bg-secondary text-bg-secondary me-1 mt-2";
                 span.setAttribute("data-status", label);
                 badgeContainer.appendChild(span);
             } else if (!item.classList.contains("selected") && badgePresent) {
@@ -47,12 +56,12 @@ function selectedStatus() {
 }
 
 function dateRangePicker() {
-    const input = document.querySelectorAll('.calendarInput');
-    input.forEach(val => {
+    const input = document.querySelectorAll(".calendarInput");
+    input.forEach((val) => {
         $(val).datepicker({
-            format: 'yyyy-mm-dd',
+            format: "yyyy-mm-dd",
             autoclose: true,
-            todayHighlight: true
+            todayHighlight: true,
         });
     });
 }
@@ -67,6 +76,26 @@ function clearEndDate() {
 }
 window.clearEndDate = clearEndDate;
 
+document.getElementById("ApplyFilters").addEventListener(
+    "click",
+    createLockHandler(() => {
+        const status = document
+            .querySelector(".selected-item-list")
+            .querySelectorAll(".badge");
+        const startDate = document.getElementById("calendarStartDate").value;
+        const endDate = document.getElementById("calendarEndDate").value;
+        const filters = {};
+        if (status.length > 0) {
+            filters.status = new Set();
+            status.forEach((val) => {
+                filters.status.add(val.getAttribute("data-status"));
+            });
+        }
+        console.log(filters);
+        viewContent(filters.status, startDate, endDate);
+    }, 500)
+);
+
 function loadContent(filters) {
     return apiJson("GET", "/content", { queryParams: filters });
 }
@@ -74,25 +103,24 @@ function loadContent(filters) {
 function populateTable(res) {
     try {
         console.log("fulfilled");
-        const contentData = document.querySelector(".content-data");
-        contentData.innerHTML = "";
+        const tableElement = document.getElementById("contentTable");
+        const contentData = tableElement.querySelector(".content-data");
+        if (contentTableDTInstance) {
+            console.log("destroying table");
+            contentTableDTInstance.clear().destroy();
+            contentData.innerHTML = "";
+            // contentTableDTInstance = null;
+        }
+
         if (res.content && res.content.length > 0) {
             loadModalSkeleton();
             res.content.forEach((val, idx) => {
-                console.log(`${idx} and ${val}`)
+                console.log(`${idx} and ${val}`);
                 console.log(val);
-                const tr = document.createElement('tr');
+                const tr = document.createElement("tr");
                 tr.innerHTML = mapToRow(val, idx);
                 contentData.appendChild(tr);
             });
-        }
-
-        // Reinitialize DataTable
-        const tableElement = document.getElementById('contentTable');
-
-        if (contentTableDTInstance) {
-            console.log("destroying table")
-            contentTableDTInstance.destroy();
         }
 
         console.log("Initializing DataTable");
@@ -101,8 +129,16 @@ function populateTable(res) {
             sortable: true,
             paging: true,
             responsive: true,
+            columns: [
+                { data: "id", className: "text-center" },
+                { data: "pageTitle" },
+                { data: "status" },
+                { data: "actions", className: "text-center" },
+                { data: "images", className: "text-center" },
+                { data: "createdAt" },
+            ],
             columnDefs: [
-                { orderable: false, targets: [3, 4] } // Disable sorting on action buttons
+                { orderable: false, targets: [3, 4] }, // Disable sorting on action buttons
             ],
             language: {
                 search: "Search Content",
@@ -113,39 +149,39 @@ function populateTable(res) {
                 emptyTable: "No data available in table",
                 zeroRecords: "No matching records found",
                 loadingRecords: "Loading...",
-                processing: "Processing..."
+                processing: "Processing...",
             },
             layout: {
-                topStart: 'pageLength',
-                topEnd: 'search',
-                bottomStart: 'info',
-                bottomEnd: 'paging'
+                topStart: "pageLength",
+                topEnd: "search",
+                bottomStart: "info",
+                bottomEnd: "paging",
             },
             lengthMenu: [5, 10, 25, 50],
             initComplete: function () {
-                const searchComponent = document.querySelector('.dt-search');
-                const searchInput = searchComponent.querySelector('input');
-                const searchLabel = searchComponent.querySelector('label');
+                const searchComponent = document.querySelector(".dt-search");
+                const searchInput = searchComponent.querySelector("input");
+                const searchLabel = searchComponent.querySelector("label");
                 if (searchComponent && searchInput && searchLabel) {
-                    searchInput.classList.add('form-control');
+                    searchInput.classList.add("form-control");
                     searchInput.placeholder = "Search";
-                    searchLabel.classList.add('visually-hidden');
+                    searchLabel.classList.add("visually-hidden");
                 }
-            }
+            },
         });
 
         // You can pass options here if needed
-    } catch(ex) {
+    } catch (ex) {
         console.log("error in populateTable ", ex);
     }
 }
 
 const contentModal = {
-    idx: -1, 
+    idx: -1,
     id: "",
     content: "",
-    title: ""
-}
+    title: "",
+};
 
 function mapToRow(val, idx) {
     if (val) {
@@ -155,14 +191,32 @@ function mapToRow(val, idx) {
          <td>${val.status}</td>
          <td>
             <a class="" href="#" data-bs-toggle="modal" data-bs-target="#viewContentModal" 
-                onclick=" loadContentInModal(${idx}, '${val.id}', '${val.pageTitle}', '${val.pageContent}')">view</a>
+                onclick=" loadContentInModal(${idx}, '${val.id}', '${
+            val.pageTitle
+        }', '${val.pageContent}')">view</a>
          </td>
          <td></td>
+         <td>${dateISOtoReadableFormat(val.createdAt)}</td>
         `;
     } else {
         console.log("Invalid value ", val);
-        return '';
+        return "";
     }
+}
+
+function dateISOtoReadableFormat(isoDateStr) {
+    const date = new Date(isoDateStr);
+
+    const options = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+    };
+    return date.toLocaleString("en-US", options);
 }
 
 function loadModalSkeleton() {
@@ -174,10 +228,17 @@ function loadModalSkeleton() {
         let stateBtnLockHandler = createLockHandler(switchContentMode, 100);
         let closeBtnLockHandler = createLockHandler(closeContentModal, 200);
         let saveBtnLockHandler = createLockHandler(saveContentById, 1000);
-        closeBtn.addEventListener("click", () => closeBtnLockHandler(contentModal.content));
+        closeBtn.addEventListener("click", () =>
+            closeBtnLockHandler(contentModal.content)
+        );
         stateBtn.addEventListener("click", () => stateBtnLockHandler());
-        saveBtn.addEventListener("click",
-            () => saveBtnLockHandler(contentModal.idx, contentModal.id, contentModal.title, contentModal.content)
+        saveBtn.addEventListener("click", () =>
+            saveBtnLockHandler(
+                contentModal.idx,
+                contentModal.id,
+                contentModal.title,
+                contentModal.content
+            )
         );
     }
 }
@@ -197,7 +258,7 @@ function loadContentInModal(idx, id, title, content) {
 }
 window.loadContentInModal = loadContentInModal;
 
-let titleChanged = false;
+let saveBtnEnabled = false;
 
 function editContentModalTitle(edited) {
     const contentModal = document.getElementById("viewContentModal");
@@ -207,9 +268,9 @@ function editContentModalTitle(edited) {
     const iconCont = contentModal.querySelector("#editContentModalTitleIcon");
     if (inputGrp && label && input && iconCont) {
         if (edited !== undefined && edited) {
-            if (!titleChanged && (label.textContent !== input.value)) {
+            if (!saveBtnEnabled && label.textContent !== input.value) {
                 contentModified(true);
-                titleChanged = true;
+                saveBtnEnabled = true;
             }
             label.textContent = input.value;
         }
@@ -231,7 +292,12 @@ function contentModified(flag) {
     }
 }
 
-let contentModifiedListener = () => { console.log("listener"); contentModified(true); }
+let contentModifiedListener = () => {
+    if (!saveBtnEnabled) {
+        contentModified(true);
+        saveBtnEnabled = true;
+    }
+};
 
 let editMode = false;
 
@@ -240,11 +306,15 @@ function switchContentMode() {
     const contentBodyEditMode = document.querySelector(".modalStateBtn");
     if (textArea && contentBodyEditMode) {
         textArea.disabled = !textArea.disabled;
-        contentBodyEditMode.textContent = textArea.disabled? "Edit": "Read-Only";
+        contentBodyEditMode.textContent = textArea.disabled
+            ? "Edit"
+            : "Read-Only";
         editMode = !textArea.disabled;
         if (editMode) {
             console.log("Adding input event listener");
-            document.addEventListener("input", contentModifiedListener, { once: true });
+            document.addEventListener("input", contentModifiedListener, {
+                once: true,
+            });
         } else {
             console.log("Removing input event listener");
             document.removeEventListener("input", contentModifiedListener);
@@ -256,9 +326,11 @@ window.switchContentMode = switchContentMode;
 function closeContentModal(content) {
     const contentBody = document.getElementById("viewContentModalBody");
     // content = contentBody.value; // for testing
-    console.log("content ", content? content: "IS_EMPTY");
+    console.log("content ", content ? content : "IS_EMPTY");
     if (content && contentBody && content !== contentBody.value) {
-        const confirmed = confirm("Closing without Saving new changes will result in loss of changes.\nClick on OK if you are sure you want to close?");
+        const confirmed = confirm(
+            "Closing without Saving new changes will result in loss of changes.\nClick on OK if you are sure you want to close?"
+        );
         if (!confirmed) {
             return;
         }
@@ -287,24 +359,27 @@ function saveContentById(idx, contentId, title, content) {
     if (title && titleNode && title !== titleNode.textContent) {
         body.pageTitle = titleNode.textContent;
     }
-    const response = apiJson("PATCH", `/content/${contentId}`, { body })
-    response.then(json => popup(idx, json));
+    const response = apiJson("PATCH", `/content/${contentId}`, { body });
+    response.then((json) => popup(idx, json));
     // return response;
 }
-window.saveContentById = saveContentById
+window.saveContentById = saveContentById;
 
 function popup(idx, json) {
     console.log(json);
     if (json && !json.errorMessage) {
         contentModal.content = json.pageContent;
         contentModal.title = json.pageTitle;
-        const newContent = `<a class="" href="#" data-bs-toggle="modal" data-bs-target="#viewContentModal"
-                            onclick=" loadContentInModal(${idx}, '${json.id}', '${json.pageTitle.trim()}', '${json.pageContent}')">view</a>`;
         const newData = contentTableDTInstance.row(idx).data();
-        newData[3] = newContent;
+        newData.pageTitle = json.pageTitle;
+        newData.actions = `<a class="" href="#" data-bs-toggle="modal" data-bs-target="#viewContentModal"
+                            onclick=" loadContentInModal(${idx}, '${
+            json.id
+        }', '${json.pageTitle.trim()}', '${json.pageContent}')">view</a>`;
         contentTableDTInstance.row(idx).data(newData).draw(false);
         console.log(contentTableDTInstance.row(idx).data());
         console.log(contentTableDTInstance.row(idx).node());
+        saveBtnEnabled = false;
         contentModified(false);
     }
 }

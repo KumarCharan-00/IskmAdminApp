@@ -63,6 +63,7 @@ export async function apiJson(method, path, options = {}) {
     const failureResponse = {};
     if (response) {
         if (response.status && response.status.toString().startsWith("2")) {
+            console.log("Response: ", response);
             return jsonResponse;
         } else {
             console.log("Response Status:", response.status);

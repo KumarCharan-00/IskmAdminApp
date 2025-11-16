@@ -2,7 +2,8 @@ package org.iskm.admin.web.controller;
 
 import java.util.Map;
 
-import org.iskm.admin.web.model.entity.Sponsors;
+import org.iskm.admin.web.model.OrderRequestDetails;
+import org.iskm.admin.web.model.RPPaymentRequest;
 import org.iskm.admin.web.service.SponsorService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,9 +20,9 @@ public class SponsorsController {
         this.sponsorService = sponsorService;
     }
 	
-	@PostMapping("/add-sponser")
-    public ResponseEntity<Sponsors> addSponser(@RequestBody Sponsors sponsor) {
-        return ResponseEntity.ok(sponsorService.addSponser(sponsor));
+	@PostMapping("/generate-pay-req")
+    public ResponseEntity<RPPaymentRequest> addSponser(@RequestBody OrderRequestDetails req) {
+        return ResponseEntity.ok(sponsorService.generatePaymentRequest(req));
     }
 	
 	@PostMapping("/payment-callback")

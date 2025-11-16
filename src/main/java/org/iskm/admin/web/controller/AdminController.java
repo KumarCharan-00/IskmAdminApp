@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -71,10 +72,10 @@ public class AdminController {
         return ResponseEntity.ok("Password updated successfully.");
     }
     
-    @PostMapping("/content/{channel}")
-    public ResponseEntity<String> addContent(@ModelAttribute ContentRequest contentRequest,@PathVariable String channel) {
-    	try {
-    		userService.saveContent(contentRequest,channel);
+    @PostMapping("/content")
+    public ResponseEntity<String> addContent(@ModelAttribute ContentRequest contentRequest, @RequestHeader("Channel") String channel) {
+        try {
+            userService.saveContent(contentRequest, channel);
             return ResponseEntity.ok("Content saved successfully");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Unexpected error: " + e.getMessage());
@@ -82,11 +83,21 @@ public class AdminController {
     }
     
     @GetMapping("/content")
-    public ResponseEntity<FetchContentResponse> getAllContent(@RequestParam(required = false) String status,
-                                                              @RequestParam(required = false) LocalDateTime from,
-                                                              @RequestParam(required = false) LocalDateTime to) {
+    public ResponseEntity<FetchContentResponse> getAllContent(@RequestParam(required = false) List<String> status,
+                                                              @RequestParam(required = false) String from,
+                                                              @RequestParam(required = false) String to) {
+        LocalDateTime fromDateTime = null;
+        LocalDateTime toDateTime = null;
+        
+        if (from != null && !from.trim().isEmpty()) {
+            fromDateTime = LocalDateTime.parse(from + "T00:00:00");
+        }
+        if (to != null && !to.trim().isEmpty()) {
+            toDateTime = LocalDateTime.parse(to + "T23:59:59");
+        }
+        
         var response = new FetchContentResponse();
-        var dtoList = userService.getContent(status, from, to).stream()
+        var dtoList = userService.getContent(status, fromDateTime, toDateTime).stream()
             .map(userService::toContentDTO)
             .toList();
         var count = dtoList.size();
@@ -97,7 +108,7 @@ public class AdminController {
     
     @PatchMapping("/content/{id}")
     public ResponseEntity<ContentDTO> patchContentById(@PathVariable String id,
-                                                       @RequestBody ContentUpdateRequest request) {
+                                                    @RequestBody ContentUpdateRequest request) {
     	ContentDTO content = userService.partialUpdateById(id, request);
         return ResponseEntity.ok(content);
     }
