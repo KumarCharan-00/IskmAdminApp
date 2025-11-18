@@ -7,15 +7,15 @@ import lombok.Data;
 @Data
 public class RPPaymentRequest {
     private String key;
-    private String amount;
+    private int amount;
     private String currency;
     private String name;
     private String description;
     private String image;
     @JsonProperty("order_id")
     private String orderId;
-    @JsonProperty("callback_url")
-    private String callbackUrl;
+    // @JsonProperty("callback_url")
+    // private String callbackUrl;
     private Prefill prefill;
     private Notes notes;
     private Theme theme;

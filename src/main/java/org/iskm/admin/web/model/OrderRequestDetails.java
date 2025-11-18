@@ -6,7 +6,7 @@ import lombok.Data;
 public class OrderRequestDetails {
     private String name;
     private String email;
-    private Long phoneNumber;
+    private Long phone;
     private String fullAddress;
     private Long amount;
     private String currency = "INR";

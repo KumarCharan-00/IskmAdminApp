@@ -49,7 +49,7 @@ public class SponsorService {
             orderRequest.put("receipt", "sponsor_" + req.getEmail());
             notes.put("name", req.getName());
             notes.put("email", req.getEmail());
-            notes.put("phoneNumber", req.getPhoneNumber());
+            notes.put("phoneNumber", req.getPhone());
             notes.put("address", req.getFullAddress());
             orderRequest.put("notes", notes);
 
@@ -78,7 +78,7 @@ public class SponsorService {
         paymentRequest.setKey(razorPayConfig.razorpayId);
         
         // Map values from order response
-        paymentRequest.setAmount(orderResponse.getAmount());
+        paymentRequest.setAmount(Integer.parseInt(orderResponse.getAmount()));
         paymentRequest.setCurrency(orderResponse.getCurrency());
         paymentRequest.setOrderId(orderResponse.getId());
         
