@@ -36,7 +36,7 @@ public class SecurityConfig {
     public RequestMatcher excludedPathMatchers() {
         List<String> excludedPaths = List.of(
                 "/login",
-                "/authenticate/user",
+                "/user/authenticate",
                 "/public/**",
                 "/css/**",
                 "/js/**",
