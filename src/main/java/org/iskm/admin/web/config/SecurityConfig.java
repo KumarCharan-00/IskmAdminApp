@@ -40,12 +40,16 @@ public class SecurityConfig {
                 "/public/**",
                 "/css/**",
                 "/js/**",
-                "/images/**"
+                "/images/**",
+                "/api/**"
         );
 
         PathMatcher pathMatcher = new AntPathMatcher();
 
         return request -> {
+            if ("GET".equalsIgnoreCase(request.getMethod())) {
+                return true;
+            }
             String path = request.getServletPath();
             return excludedPaths.stream().anyMatch(pattern -> pathMatcher.match(pattern, path));
         };
