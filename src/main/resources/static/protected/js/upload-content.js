@@ -414,6 +414,49 @@ function validateFormData(formData) {
         }
     }
 
+    // Word count validations
+    let isValid = true;
+    if (!validateWordCount("contentTitle", 7)) isValid = false;
+    if (!validateWordCount("contentQuote", 15)) isValid = false;
+    if (!validateWordCount("contentPreview", 20)) isValid = false;
+
+    // Content limit depends on type
+    const contentLimit = type === "Blog" ? 200 : 45;
+    if (!validateWordCount("contentBody", contentLimit)) isValid = false;
+
+    if (!isValid) {
+        log(LOG_LEVELS.WARN, "Validation failed: Word count limit exceeded");
+        return false;
+    }
+
     log(LOG_LEVELS.DEBUG, "Form validation passed");
     return true;
+}
+
+function validateWordCount(elementId, maxWords) {
+    const element = document.getElementById(elementId);
+    if (!element || element.disabled) return true;
+
+    const text = element.value.trim();
+    if (!text) {
+        element.classList.remove("is-invalid");
+        return true;
+    }
+
+    const wordCount = text.split(/\s+/).filter((w) => w.length > 0).length;
+
+    if (wordCount > maxWords) {
+        element.classList.add("is-invalid");
+        let feedback = element.parentElement.querySelector(".invalid-feedback");
+        if (!feedback) {
+            feedback = document.createElement("div");
+            feedback.className = "invalid-feedback";
+            element.parentElement.appendChild(feedback);
+        }
+        feedback.textContent = `Max number of words allowed ${maxWords}`;
+        return false;
+    } else {
+        element.classList.remove("is-invalid");
+        return true;
+    }
 }
