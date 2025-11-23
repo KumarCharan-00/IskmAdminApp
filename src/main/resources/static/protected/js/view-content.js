@@ -3,6 +3,7 @@ import {
     showOutputPanel,
     apiJson,
     createLockHandler,
+    dateRangePicker,
 } from "./common-util.js";
 
 // Event Listeners
@@ -51,17 +52,6 @@ function selectedStatus() {
             } else if (!item.classList.contains("selected") && badgePresent) {
                 badgePresent.remove();
             }
-        });
-    });
-}
-
-function dateRangePicker() {
-    const input = document.querySelectorAll(".calendarInput");
-    input.forEach((val) => {
-        $(val).datepicker({
-            format: "yyyy-mm-dd",
-            autoclose: true,
-            todayHighlight: true,
         });
     });
 }
