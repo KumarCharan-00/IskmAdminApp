@@ -15,6 +15,7 @@ public class CorsConfig implements WebMvcConfigurer {
     private String allowedOrigins;
 
   @Override
+  @SuppressWarnings("null")
   public void addCorsMappings(@NonNull CorsRegistry registry) {
 
     var allowedOriginsArray = Arrays.stream((allowedOrigins == null ? "" : allowedOrigins).split(","))
