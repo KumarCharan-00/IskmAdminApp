@@ -457,6 +457,10 @@ function validateWordCount(elementId, maxWords) {
         return false;
     } else {
         element.classList.remove("is-invalid");
+        let feedback = element.parentElement.querySelector(".invalid-feedback");
+        if (feedback) {
+            feedback.remove();
+        }
         return true;
     }
 }
