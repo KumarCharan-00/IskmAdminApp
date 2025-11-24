@@ -16,6 +16,7 @@ import org.iskm.admin.web.model.PasswordUpdateRequest;
 import org.iskm.admin.web.service.UserService;
 import org.iskm.admin.web.util.JwtUtil;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,7 +27,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -60,20 +60,20 @@ public class AdminController {
     }
 
     @PostMapping("/user/create")
-    public Response registerUser(@RequestBody AddUserDTO addUserDTO) {
+    public Response registerUser(@RequestBody @NonNull AddUserDTO addUserDTO) {
         return userService.saveUser(addUserDTO);
     }
 
     @PutMapping("/update-password")
-    public ResponseEntity<String> updatePassword(@RequestBody PasswordUpdateRequest request) {
+    public ResponseEntity<String> updatePassword(@RequestBody @NonNull PasswordUpdateRequest request) {
         userService.updatePassword(request.getUserName(), request.getNewPassword());
         return ResponseEntity.ok("Password updated successfully.");
     }
 
     @PostMapping("/content")
-    public ResponseEntity<String> addContent(@ModelAttribute ContentRequest contentRequest, @RequestHeader("Channel") String channel) {
+    public ResponseEntity<String> addContent(@ModelAttribute @NonNull ContentRequest contentRequest) {
         try {
-            userService.saveContent(contentRequest, channel);
+            userService.saveContent(contentRequest);
             return ResponseEntity.ok("Content saved successfully");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Unexpected error: " + e.getMessage());
@@ -112,23 +112,14 @@ public class AdminController {
     }
 
     @DeleteMapping("/content/{id}")
-    public ResponseEntity<Void> deleteContent(@PathVariable String id) {
+    public ResponseEntity<Void> deleteContent(@PathVariable @NonNull String id) {
         userService.deleteContent(id);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/webImages/{contentId}")
-    public ResponseEntity<List<ImageDTO>> getWebImagesByContentId(@PathVariable String contentId) {
-        List<ImageDTO> images = userService.getWebImagesByContentId(contentId);
-        if (images.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.ok(images);
-    }
-
-    @GetMapping("/mobileImages/{contentId}")
-    public ResponseEntity<List<ImageDTO>> getMobileImagesByContentId(@PathVariable String contentId) {
-        List<ImageDTO> images = userService.getMobileImagesByContentId(contentId);
+    @GetMapping("/images/{contentId}")
+    public ResponseEntity<List<ImageDTO>> getImagesByContentId(@PathVariable @NonNull String contentId) {
+        List<ImageDTO> images = userService.getImagesByContentId(contentId);
         if (images.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
