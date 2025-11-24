@@ -89,11 +89,18 @@ public class UserService {
 
     public void saveContent(ContentRequest request) {
         List<Image> imageList = new ArrayList<>();
-        Content content = new Content(
+        var content = new Content(
                 CommonUtil.generateUUID(),
-                request.getPageTitle(), request.getPageContent(),
+                request.getType(),
+                request.getTitle(),
+                request.getQuote(),
+                request.getShortText(),
+                request.getFullText(),
                 request.getStatus() != null ? request.getStatus() : "draft",
-                LocalDateTime.now(), imageList
+                request.getShowFromDate(),
+                request.getShowToDate(),
+                LocalDateTime.now(),
+                imageList
         );
         if (request.getImages() != null
                 && !request.getImages().isEmpty()) {
@@ -166,8 +173,11 @@ public class UserService {
     public ContentDTO toContentDTO(Content content) {
         ContentDTO dto = new ContentDTO();
         dto.setId(content.getId());
-        dto.setPageTitle(content.getPageTitle());
-        dto.setPageContent(content.getPageContent());
+        dto.setType(content.getType());
+        dto.setTitle(content.getTitle());
+        dto.setQuote(content.getQuote());
+        dto.setPreviewText(content.getShortText());
+        dto.setFullText(content.getFullText());
         dto.setStatus(content.getStatus());
         dto.setCreatedAt(content.getCreatedAt());
         return dto;
@@ -188,19 +198,34 @@ public class UserService {
     }
 
     @Transactional
-    public ContentDTO partialUpdateById(String id, ContentUpdateRequest request) {
+    public ContentDTO partialUpdateById(@NonNull String id, ContentUpdateRequest request) {
         try {
             Content content = contentRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Content not found with id: " + id));
 
-            if (request.getPageTitle() != null && !request.getPageTitle().isBlank()) {
-                content.setPageTitle(request.getPageTitle());
+            if (request.getType() != null && !request.getType().isBlank()) {
+                content.setType(request.getType());
             }
-            if (request.getPageContent() != null && !request.getPageContent().isBlank()) {
-                content.setPageContent(request.getPageContent());
+            if (request.getTitle() != null && !request.getTitle().isBlank()) {
+                content.setTitle(request.getTitle());
+            }
+            if (request.getQuote() != null && !request.getQuote().isBlank()) {
+                content.setQuote(request.getQuote());
+            }
+            if (request.getPreviewText() != null && !request.getPreviewText().isBlank()) {
+                content.setShortText(request.getPreviewText());
+            }
+            if (request.getFullText() != null && !request.getFullText().isBlank()) {
+                content.setFullText(request.getFullText());
             }
             if (request.getStatus() != null && !request.getStatus().isBlank()) {
                 content.setStatus(request.getStatus());
+            }
+            if (request.getShowFromDate() != null) {
+                content.setShowFromDate(request.getShowFromDate());
+            }
+            if (request.getShowToDate() != null) {
+                content.setShowToDate(request.getShowToDate());
             }
             Objects.requireNonNull(content);
             contentRepository.save(content);

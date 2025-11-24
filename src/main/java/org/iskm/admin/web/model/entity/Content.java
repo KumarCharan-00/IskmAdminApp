@@ -1,5 +1,6 @@
 package org.iskm.admin.web.model.entity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,20 +31,35 @@ public class Content {
     @Id
     private String id;
 
-    @Column(name = "page_title", nullable = false)
-    private String pageTitle;
+    @Column(name = "type", nullable = false)
+    private String type;
 
-    @Column(name = "page_content", nullable = false, columnDefinition = "TEXT")
-    private String pageContent;
+    @Column(name = "title", nullable = false)
+    private String title;
+
+    @Column(name = "quote", nullable = false)
+    private String quote;
+
+    @Column(name = "short_text", nullable = false, columnDefinition = "TEXT")
+    private String shortText;
+
+    @Column(name = "full_text", nullable = false, columnDefinition = "TEXT")
+    private String fullText;
 
     @Column(name = "status", nullable = false)
     private String status = "draft";
+
+    @Column(name = "show_from_date")
+    private LocalDate showFromDate;
+
+    @Column(name = "show_to_date")
+    private LocalDate showToDate;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @ToString.Exclude
-    @OneToMany(mappedBy = "content", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images = new ArrayList<>();
 
     @Override

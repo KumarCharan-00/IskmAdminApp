@@ -1,5 +1,6 @@
 package org.iskm.admin.web.dto.res;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -11,10 +12,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ContentDTO {
+
     private String id;
-    private String pageTitle;
-    private String pageContent;
+    private String type;
+    private String title;
+    private String quote;
+    private String previewText;
+    private String fullText;
     private String status;
+    private LocalDate showFromDate;
+    private LocalDate showToDate;
     private LocalDateTime createdAt;
     private List<ImageDTO> images;
 
@@ -22,6 +29,7 @@ public class ContentDTO {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class ImageDTO {
+
         private Long id;
         private byte[] imageData;
         private LocalDateTime expiresAt;
