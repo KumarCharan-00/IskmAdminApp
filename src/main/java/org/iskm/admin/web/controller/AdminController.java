@@ -80,6 +80,13 @@ public class AdminController {
         }
     }
 
+    @GetMapping("/public/content")
+    public ResponseEntity<FetchContentResponse> getPublishedContent(
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to) {
+        return getAllContent(List.of("published"), from, to);
+    }
+
     @GetMapping("/content")
     public ResponseEntity<FetchContentResponse> getAllContent(@RequestParam(required = false) List<String> status,
             @RequestParam(required = false) String from,
