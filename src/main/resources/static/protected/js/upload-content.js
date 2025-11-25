@@ -326,20 +326,20 @@ function collectFormData() {
     // Get title
     const titleInput = document.getElementById("contentTitle");
     if (titleInput && titleInput.value.trim()) {
-        formData.append("pageTitle", titleInput.value.trim());
+        formData.append("title", titleInput.value.trim());
     }
 
     // Get content
     const contentTextarea = document.getElementById("contentBody");
     if (contentTextarea && contentTextarea.value.trim()) {
-        formData.append("pageContent", contentTextarea.value.trim());
+        formData.append("fullText", contentTextarea.value.trim());
     }
 
     // Get images
     const imageInput = document.getElementById("imageUpload");
     if (imageInput && imageInput.files.length > 0) {
         Array.from(imageInput.files).forEach((file) => {
-            formData.append("webImages", file);
+            formData.append("images", file);
         });
     }
 
@@ -347,7 +347,7 @@ function collectFormData() {
     const startDate = document.getElementById("contentStartDate");
     const endDate = document.getElementById("contentEndDate");
     if (startDate && !startDate.disabled && startDate.value) {
-        formData.append("startDate", startDate.value);
+        formData.append("showFromDate", startDate.value);
     }
     if (endDate && !endDate.disabled && endDate.value) {
         formData.append("endDate", endDate.value);
@@ -374,7 +374,7 @@ function collectFormData() {
     // Get Preview (if enabled)
     const preview = document.getElementById("contentPreview");
     if (preview && !preview.disabled && preview.value.trim()) {
-        formData.append("previewText", preview.value.trim());
+        formData.append("shortText", preview.value.trim());
     }
 
     log(LOG_LEVELS.DEBUG, "Form data collection completed");
@@ -388,26 +388,26 @@ function validateFormData(formData) {
     const type = formData.get("type");
 
     // Check if title is provided
-    if (!formData.get("pageTitle")) {
+    if (!formData.get("title")) {
         log(LOG_LEVELS.WARN, "Validation failed: Missing page title");
         alert("Please enter a Title.");
         return false;
     }
 
     // Check if content is provided
-    if (!formData.get("pageContent")) {
+    if (!formData.get("fullText")) {
         log(LOG_LEVELS.WARN, "Validation failed: Missing page content");
         alert("Please enter Content.");
         return false;
     }
 
     if (type === "Festival" || type === "Seva") {
-        if (!formData.get("startDate")) {
+        if (!formData.get("showFromDate")) {
             log(LOG_LEVELS.WARN, "Validation failed: Missing start date");
             alert("Please select a Start Date.");
             return false;
         }
-        if (!formData.get("endDate")) {
+        if (!formData.get("showToDate")) {
             log(LOG_LEVELS.WARN, "Validation failed: Missing end date");
             alert("Please select an End Date.");
             return false;

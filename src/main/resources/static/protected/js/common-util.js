@@ -44,11 +44,16 @@ export async function api(method, path, options = {}) {
             ? `${path}?${new URLSearchParams(queryParams).toString()}`
             : path;
     } else {
-        console.log(
-            "Body: ",
-            body ? JSON.stringify(body) : "EMPTY_BODY_PASSED"
-        );
-        fetchOptions.body = body ? JSON.stringify(body) : "";
+        if (body instanceof FormData) {
+            console.log("Body: FormData object");
+            fetchOptions.body = body;
+        } else {
+            console.log(
+                "Body: ",
+                body ? JSON.stringify(body) : "EMPTY_BODY_PASSED"
+            );
+            fetchOptions.body = body ? JSON.stringify(body) : "";
+        }
     }
     return await fetch(path, fetchOptions).catch((err) => {
         console.error(

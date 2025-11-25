@@ -20,6 +20,8 @@ public class ContentDTO {
     private String previewText;
     private String fullText;
     private String status;
+    private String location;
+    private Boolean showDonation;
     private LocalDate showFromDate;
     private LocalDate showToDate;
     private LocalDateTime createdAt;

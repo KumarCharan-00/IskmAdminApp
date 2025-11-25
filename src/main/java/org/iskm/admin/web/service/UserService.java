@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import org.iskm.admin.web.dto.res.AddUserDTO;
 import org.iskm.admin.web.dto.res.AddUserResponse;
@@ -96,6 +97,8 @@ public class UserService {
                 request.getQuote(),
                 request.getShortText(),
                 request.getFullText(),
+                request.getLocation(),
+                request.getShowDonation(),
                 request.getStatus() != null ? request.getStatus() : "draft",
                 request.getShowFromDate(),
                 request.getShowToDate(),
@@ -203,30 +206,8 @@ public class UserService {
             Content content = contentRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Content not found with id: " + id));
 
-            if (request.getType() != null && !request.getType().isBlank()) {
-                content.setType(request.getType());
-            }
-            if (request.getTitle() != null && !request.getTitle().isBlank()) {
-                content.setTitle(request.getTitle());
-            }
-            if (request.getQuote() != null && !request.getQuote().isBlank()) {
-                content.setQuote(request.getQuote());
-            }
-            if (request.getPreviewText() != null && !request.getPreviewText().isBlank()) {
-                content.setShortText(request.getPreviewText());
-            }
-            if (request.getFullText() != null && !request.getFullText().isBlank()) {
-                content.setFullText(request.getFullText());
-            }
-            if (request.getStatus() != null && !request.getStatus().isBlank()) {
-                content.setStatus(request.getStatus());
-            }
-            if (request.getShowFromDate() != null) {
-                content.setShowFromDate(request.getShowFromDate());
-            }
-            if (request.getShowToDate() != null) {
-                content.setShowToDate(request.getShowToDate());
-            }
+            updateContentFields(content, request);
+
             Objects.requireNonNull(content);
             contentRepository.save(content);
             return toContentDTO(content);
@@ -234,6 +215,32 @@ public class UserService {
         } catch (Exception ex) {
             log.error("Updating content by id failed with exception :: ", ex);
             return null;
+        }
+    }
+
+    private void updateContentFields(Content content, ContentUpdateRequest request) {
+        updateStringField(content::setType, request.getType());
+        updateStringField(content::setTitle, request.getTitle());
+        updateStringField(content::setQuote, request.getQuote());
+        updateStringField(content::setShortText, request.getPreviewText());
+        updateStringField(content::setFullText, request.getFullText());
+        updateStringField(content::setStatus, request.getStatus());
+        updateStringField(content::setLocation, request.getLocation());
+
+        if (request.getShowFromDate() != null) {
+            content.setShowFromDate(request.getShowFromDate());
+        }
+        if (request.getShowToDate() != null) {
+            content.setShowToDate(request.getShowToDate());
+        }
+        if (request.getShowDonation() != null) {
+            content.setShowDonation(request.getShowDonation());
+        }
+    }
+
+    private void updateStringField(Consumer<String> setter, String value) {
+        if (value != null && !value.isBlank()) {
+            setter.accept(value);
         }
     }
 

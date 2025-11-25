@@ -18,6 +18,8 @@ public class ContentRequest {
     private String quote;
     private String shortText;
     private String fullText;
+    private String location;
+    private Boolean showDonation;
     private List<MultipartFile> images;
     private String status;
     private LocalDate showFromDate;

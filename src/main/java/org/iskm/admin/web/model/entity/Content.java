@@ -46,6 +46,12 @@ public class Content {
     @Column(name = "full_text", nullable = false, columnDefinition = "TEXT")
     private String fullText;
 
+    @Column(name = "location")
+    private String location;
+
+    @Column(name = "show_donation")
+    private Boolean showDonation;
+
     @Column(name = "status", nullable = false)
     private String status = "draft";
 
