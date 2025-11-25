@@ -31,7 +31,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 public class AdminController {
 
@@ -49,32 +51,40 @@ public class AdminController {
 
     @PostMapping("/user/authenticate")
     public ResponseEntity<AuthenticationResponse> authenticateUser(@RequestBody AuthenticationRequest request, HttpServletResponse response) {
-        authenticationManager.authenticate(
+        var authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUserName(), request.getPassword())
         );
-
+        log.info("User authenticated completed :: {}", authentication);
         String token = jwtUtil.generateToken(request.getUserName());
-
+        log.info("Generated token for user: {}", token.substring(0, 5));
         response.addCookie(jwtUtil.generateHttpOnlyCookie(token));
+        log.info("Added cookie for user");
         return ResponseEntity.ok(new AuthenticationResponse(token));
     }
 
     @PostMapping("/user/create")
     public Response registerUser(@RequestBody @NonNull AddUserDTO addUserDTO) {
+        log.info("Registering user: {}", addUserDTO.getUserName());
         return userService.saveUser(addUserDTO);
     }
 
     @PutMapping("/update-password")
     public ResponseEntity<String> updatePassword(@RequestBody @NonNull PasswordUpdateRequest request) {
+        log.info("Updating password for user: {}", request.getUserName());
         userService.updatePassword(request.getUserName(), request.getNewPassword());
         return ResponseEntity.ok("Password updated successfully.");
     }
 
     @PostMapping("/content")
     public ResponseEntity<String> addContent(@ModelAttribute @NonNull ContentRequest contentRequest) {
+        log.info("Adding content: {}", contentRequest.getTitle());
         try {
-            userService.saveContent(contentRequest);
-            return ResponseEntity.ok("Content saved successfully");
+            var response = userService.saveContent(contentRequest);
+            if (response instanceof ContentDTO) {
+                return ResponseEntity.ok("Content saved successfully");
+            } else {
+                return ResponseEntity.status(500).body(response.toString());
+            }
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Unexpected error: " + e.getMessage());
         }
@@ -84,6 +94,7 @@ public class AdminController {
     public ResponseEntity<FetchContentResponse> getPublishedContent(
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to) {
+        log.info("Fetching published content from: {} to: {}", from, to);
         return getAllContent(List.of("published"), from, to);
     }
 
@@ -91,13 +102,16 @@ public class AdminController {
     public ResponseEntity<FetchContentResponse> getAllContent(@RequestParam(required = false) List<String> status,
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to) {
+        log.info("Fetching {} content from: {} to: {}", status, from, to);
         LocalDateTime fromDateTime = null;
         LocalDateTime toDateTime = null;
 
         if (from != null && !from.trim().isEmpty()) {
+            log.info("From date: {}", from);
             fromDateTime = LocalDateTime.parse(from + "T00:00:00");
         }
         if (to != null && !to.trim().isEmpty()) {
+            log.info("To date: {}", to);
             toDateTime = LocalDateTime.parse(to + "T23:59:59");
         }
 
@@ -108,12 +122,14 @@ public class AdminController {
         var count = dtoList.size();
         response.setContent(dtoList);
         response.setCount(count);
+        log.info("Response count: {}", count);
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/content/{id}")
     public ResponseEntity<ContentDTO> patchContentById(@PathVariable String id,
             @RequestBody ContentUpdateRequest request) {
+        log.info("Patching content: {}", id);
         ContentDTO content = userService.partialUpdateById(id, request);
         return ResponseEntity.ok(content);
     }

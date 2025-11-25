@@ -1,10 +1,9 @@
 package org.iskm.admin.web.security;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Objects;
+
 import org.iskm.admin.web.util.JwtUtil;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -12,10 +11,14 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Objects;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class JWTAuthenticationSecurityFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil = new JwtUtil();
@@ -30,7 +33,7 @@ public class JWTAuthenticationSecurityFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         if (excludedPathMatchers.matches(request)) {
-            System.out.println("Request matched excluded path matchers");
+            log.info("Request matched excluded path matchers");
             filterChain.doFilter(request, response);
             return;
         }
@@ -50,7 +53,7 @@ public class JWTAuthenticationSecurityFilter extends OncePerRequestFilter {
             }
             var decodedToken = jwtUtil.validateToken(token);
             if (Objects.nonNull(decodedToken)) {
-                System.out.println("Token is valid " + request.getServletPath());
+                log.info("Token is valid {}", request.getServletPath());
                 var authToken = new UsernamePasswordAuthenticationToken(decodedToken, null, null);
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);

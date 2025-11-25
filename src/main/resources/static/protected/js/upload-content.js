@@ -350,7 +350,7 @@ function collectFormData() {
         formData.append("showFromDate", startDate.value);
     }
     if (endDate && !endDate.disabled && endDate.value) {
-        formData.append("endDate", endDate.value);
+        formData.append("showToDate", endDate.value);
     }
 
     // Get Location (if enabled)

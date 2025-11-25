@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ContentDTO {
+public class ContentDTO extends ErrorDTO {
 
     private String id;
     private String type;

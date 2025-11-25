@@ -89,4 +89,9 @@ public class Content {
     public final int hashCode() {
         return this instanceof HibernateProxy hibernateProxy ? hibernateProxy.getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
     }
+
+    @Override
+    public String toString() {
+        return "Content [id=" + id + ", type=" + type + ", title=" + title + ", quote=" + quote + ", shortText=" + shortText + ", fullText=" + fullText + ", location=" + location + ", showDonation=" + showDonation + ", status=" + status + ", showFromDate=" + showFromDate + ", showToDate=" + showToDate + ", createdAt=" + createdAt + "]";
+    }
 }

@@ -1,5 +1,8 @@
 document.addEventListener("DOMContentLoaded", function () {
     const form = document.getElementById("loginForm");
+    const messageDiv = document.getElementById("message");
+    const submitButton = form.querySelector("button[type='submit']");
+
     if (!form) {
         console.error("loginForm not found in DOM");
         return;
@@ -8,6 +11,14 @@ document.addEventListener("DOMContentLoaded", function () {
     form.addEventListener("submit", async function (e) {
         e.preventDefault();
         console.log("Inside JS");
+
+        // Clear previous messages
+        messageDiv.textContent = "";
+
+        // Button responsiveness (loading state)
+        const originalButtonText = submitButton.textContent;
+        submitButton.textContent = "Logging in...";
+        submitButton.disabled = true;
 
         const userName = document.getElementById("username").value.trim();
         const password = document.getElementById("password").value.trim();
@@ -21,8 +32,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 body: JSON.stringify({ userName, password }),
             });
             console.log("Response Status:", response.status);
+
             if (!response.ok) {
                 console.log("Response not OK");
+                messageDiv.textContent = "Invalid credentials";
                 throw new Error("Authentication failed");
             }
 
@@ -35,10 +48,18 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.log("JWT Token:", token);
                 window.location.href = "/view-content";
             } else {
+                messageDiv.textContent = "Invalid credentials";
                 throw new Error("Token not received");
             }
         } catch (error) {
             console.error("Error during authentication:", error);
+            if (!messageDiv.textContent) {
+                messageDiv.textContent = "Invalid credentials";
+            }
+        } finally {
+            // Reset button state
+            submitButton.textContent = originalButtonText;
+            submitButton.disabled = false;
         }
     });
 });

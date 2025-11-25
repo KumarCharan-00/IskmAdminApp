@@ -38,6 +38,7 @@ public class SecurityConfig {
         List<String> excludedPaths = List.of(
                 "/login",
                 "/user/authenticate",
+                "/user/create",
                 "/public/**",
                 "/css/**",
                 "/js/**",

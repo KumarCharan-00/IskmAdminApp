@@ -12,6 +12,7 @@ import org.iskm.admin.web.dto.res.AddUserDTO;
 import org.iskm.admin.web.dto.res.AddUserResponse;
 import org.iskm.admin.web.dto.res.ContentDTO;
 import org.iskm.admin.web.dto.res.ContentDTO.ImageDTO;
+import org.iskm.admin.web.dto.res.ErrorDTO;
 import org.iskm.admin.web.dto.res.Response;
 import org.iskm.admin.web.model.ContentRequest;
 import org.iskm.admin.web.model.ContentUpdateRequest;
@@ -88,7 +89,7 @@ public class UserService {
         }
     }
 
-    public void saveContent(ContentRequest request) {
+    public Response saveContent(ContentRequest request) {
         List<Image> imageList = new ArrayList<>();
         var content = new Content(
                 CommonUtil.generateUUID(),
@@ -105,14 +106,23 @@ public class UserService {
                 LocalDateTime.now(),
                 imageList
         );
+        log.info("Content Request: {}", request);
         if (request.getImages() != null
                 && !request.getImages().isEmpty()) {
             savingImageContent(request, imageList, content);
-
         } else {
             log.info("Images not added");
         }
-
+        try {
+            var val = contentRepository.save(content);
+            log.info("Content saved to DB");
+            return toContentDTO(val);
+        } catch (Exception ex) {
+            log.error("Saving content to DB failed with the exception :: ", ex);
+            ErrorDTO errorDTO = new ErrorDTO();
+            errorDTO.setFailureMsg("Saving content to DB failed with the exception :: " + ex.getMessage());
+            return errorDTO;
+        }
     }
 
     private void savingImageContent(ContentRequest request, List<Image> imageList, @NonNull Content content) {
@@ -120,16 +130,13 @@ public class UserService {
             log.info("image should not be null");
             throw new RuntimeException("image should not be null or Empty");
         }
+        log.info("Saving images to DB");
         var imageFiles = request.getImages();
-        try {
-            for (MultipartFile imageFile : imageFiles) {
-                if (imageFile != null && !imageFile.isEmpty()) {
-                    processImage(imageFile, imageList, content);
-                }
+        log.info("Image files count: {}", imageFiles.size());
+        for (MultipartFile imageFile : imageFiles) {
+            if (imageFile != null && !imageFile.isEmpty()) {
+                processImage(imageFile, imageList, content);
             }
-            contentRepository.save(content);
-        } catch (Exception ex) {
-            log.error("Saving content to DB failed with the exception :: ", ex);
         }
     }
 
@@ -139,6 +146,7 @@ public class UserService {
             image.setImageData(imageFile.getBytes());
             image.setContent(content);
             imageList.add(image);
+            log.info("Image added to list (Processed)");
         } catch (IOException e) {
             log.error("Failed to process image", e);
             throw new RuntimeException("Failed to process image", e);
@@ -164,6 +172,7 @@ public class UserService {
                 if (from != null) {
                     predicates.add(builder.greaterThanOrEqualTo(root.get("createdAt"), from));
                 }
+                log.info("Predicates :: {}", predicates);
                 return builder.and(predicates.toArray(Predicate[]::new));
             };
             return contentRepository.findAll(spec);
@@ -182,6 +191,10 @@ public class UserService {
         dto.setPreviewText(content.getShortText());
         dto.setFullText(content.getFullText());
         dto.setStatus(content.getStatus());
+        dto.setShowFromDate(content.getShowFromDate());
+        dto.setShowToDate(content.getShowToDate());
+        dto.setShowDonation(content.getShowDonation());
+        dto.setLocation(content.getLocation());
         dto.setCreatedAt(content.getCreatedAt());
         return dto;
     }
