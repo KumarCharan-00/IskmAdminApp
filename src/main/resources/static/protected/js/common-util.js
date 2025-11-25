@@ -55,27 +55,38 @@ export async function api(method, path, options = {}) {
             fetchOptions.body = body ? JSON.stringify(body) : "";
         }
     }
-    return await fetch(path, fetchOptions).catch((err) => {
-        console.error(
-            `API call for ${path} for ${method} failed with error: ${err}`
-        );
-        throw err;
-    });
+    return await fetch(path, fetchOptions);
 }
 
 export async function apiJson(method, path, options = {}) {
     const response = await api(method, path, options);
-    const jsonResponse = await response.json();
+
+    let jsonResponse;
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+        jsonResponse = await response.json();
+    } else {
+        const text = await response.text();
+        try {
+            jsonResponse = JSON.parse(text);
+        } catch (e) {
+            jsonResponse = text;
+        }
+    }
+
     const failureResponse = {};
     if (response) {
-        if (response.status && response.status.toString().startsWith("2")) {
+        if (response.ok) {
             console.log("Response: ", response);
             return jsonResponse;
         } else {
             console.log("Response Status:", response.status);
             console.log(jsonResponse);
             failureResponse.status = response.status;
-            failureResponse.errorMessage = "01";
+            failureResponse.errorMessage =
+                typeof jsonResponse === "object" && jsonResponse.message
+                    ? jsonResponse.message
+                    : "01";
             failureResponse.errorDescription = "Internal Server Error";
             return failureResponse;
         }

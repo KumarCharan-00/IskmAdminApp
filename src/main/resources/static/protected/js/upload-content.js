@@ -127,9 +127,11 @@ function updateFormFields(type) {
     }
 }
 
-function clearContentForm() {
+function clearContentForm(userConfirmed = false) {
     log(LOG_LEVELS.INFO, "clearContentForm function called");
-    const confirmed = confirm("Are you sure you want to clear all fields?");
+    const confirmed = userConfirmed
+        ? true
+        : confirm("Are you sure you want to clear all fields?");
     if (!confirmed) {
         log(LOG_LEVELS.INFO, "User cancelled form clearing");
         return;
@@ -272,25 +274,29 @@ function saveContent(status) {
                 );
                 if (response && !response.errorMessage) {
                     log(LOG_LEVELS.INFO, `${actionName} successful`);
-                    alert(
+                    showAlert(
                         `Content ${
                             status === "draft"
                                 ? "saved as draft"
                                 : "saved and uploaded"
-                        } successfully!`
+                        } successfully!`,
+                        "success"
                     );
-                    clearContentForm();
+                    clearContentForm(true);
                 } else {
                     const errorMsg = response?.errorMessage || "Unknown error";
                     log(LOG_LEVELS.ERROR, `${actionName} failed`, {
                         errorMessage: errorMsg,
                     });
-                    alert(`Failed to save content: ${errorMsg}`);
+                    showAlert(`Failed to save content: ${errorMsg}`, "danger");
                 }
             })
             .catch((error) => {
                 log(LOG_LEVELS.ERROR, `${actionName} API call failed`, error);
-                alert(`Failed to save content. Please try again.`);
+                showAlert(
+                    `Failed to save content. Please try again.`,
+                    "danger"
+                );
             });
     }, 1000); // 1 second lock to prevent double clicks
 
@@ -390,26 +396,26 @@ function validateFormData(formData) {
     // Check if title is provided
     if (!formData.get("title")) {
         log(LOG_LEVELS.WARN, "Validation failed: Missing page title");
-        alert("Please enter a Title.");
+        showAlert("Please enter a Title.", "danger");
         return false;
     }
 
     // Check if content is provided
     if (!formData.get("fullText")) {
         log(LOG_LEVELS.WARN, "Validation failed: Missing page content");
-        alert("Please enter Content.");
+        showAlert("Please enter Content.", "danger");
         return false;
     }
 
     if (type === "Festival" || type === "Seva") {
         if (!formData.get("showFromDate")) {
             log(LOG_LEVELS.WARN, "Validation failed: Missing start date");
-            alert("Please select a Start Date.");
+            showAlert("Please select a Start Date.", "danger");
             return false;
         }
         if (!formData.get("showToDate")) {
             log(LOG_LEVELS.WARN, "Validation failed: Missing end date");
-            alert("Please select an End Date.");
+            showAlert("Please select an End Date.", "danger");
             return false;
         }
     }
@@ -463,4 +469,25 @@ function validateWordCount(elementId, maxWords) {
         }
         return true;
     }
+}
+
+function showAlert(message, type = "success") {
+    const alertContainer = document.getElementById("alertContainer");
+    if (!alertContainer) return;
+
+    const alertDiv = document.createElement("div");
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.role = "alert";
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+
+    alertContainer.appendChild(alertDiv);
+
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        const alert = bootstrap.Alert.getOrCreateInstance(alertDiv);
+        alert.close();
+    }, 5000);
 }

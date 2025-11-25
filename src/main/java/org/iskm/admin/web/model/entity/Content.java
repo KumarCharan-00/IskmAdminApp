@@ -37,13 +37,13 @@ public class Content {
     @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "quote", nullable = false)
+    @Column(name = "quote")
     private String quote;
 
-    @Column(name = "short_text", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "short_text", columnDefinition = "TEXT")
     private String shortText;
 
-    @Column(name = "full_text", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "full_text", columnDefinition = "TEXT")
     private String fullText;
 
     @Column(name = "location")
