@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RestController("/api")
 public class SponsorsController {
 	
@@ -22,6 +25,7 @@ public class SponsorsController {
 	
 	@PostMapping("/generate-pay-req")
     public ResponseEntity<RPPaymentRequest> addSponser(@RequestBody OrderRequestDetails req) {
+		log.info("Generating payment request for donor: {}", req);
         return ResponseEntity.ok(sponsorService.generatePaymentRequest(req));
     }
 	

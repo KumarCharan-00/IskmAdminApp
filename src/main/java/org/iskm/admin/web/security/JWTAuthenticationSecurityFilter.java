@@ -38,7 +38,9 @@ public class JWTAuthenticationSecurityFilter extends OncePerRequestFilter {
             return;
         }
 
-        var token = Arrays.stream(request.getCookies())
+        log.info("path :: {}", request.getServletPath());
+
+        var token = request.getCookies() == null? null: Arrays.stream(request.getCookies())
                 .filter(Objects::nonNull)
                 .filter(cookie -> "login.at".equals(cookie.getName()))
                 .findFirst()
