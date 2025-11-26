@@ -106,24 +106,37 @@ function updateFormFields(type) {
         }
     };
 
+    const dateHelpText = document.getElementById("dateHelpText");
+
     if (type === "Festival") {
         toggle(fields.location, true);
         toggle(fields.dates, true);
         toggle(fields.donation, true);
         toggle(fields.quote, true);
         toggle(fields.preview, true);
+        if (dateHelpText) {
+            dateHelpText.textContent =
+                "These are the days this event is expected to start and stay valid until date. Once event starts even if it is in draft date it will be moved to published state and after end date it will be moved to expired state. For Festival User can see these dates";
+        }
     } else if (type === "Seva") {
         toggle(fields.location, false);
         toggle(fields.dates, true);
-        toggle(fields.donation, false);
-        toggle(fields.quote, false);
-        toggle(fields.preview, false);
+        toggle(fields.donation, true);
+        toggle(fields.quote, true);
+        toggle(fields.preview, true);
+        if (dateHelpText) {
+            dateHelpText.textContent =
+                "This start date this event automatically moves to published state if it is in draft and after end date it moves to expired state. User Cannot see these dates";
+        }
     } else if (type === "Blog") {
         toggle(fields.location, false);
         toggle(fields.dates, false);
-        toggle(fields.donation, false);
-        toggle(fields.quote, false);
-        toggle(fields.preview, false);
+        toggle(fields.donation, true);
+        toggle(fields.quote, true);
+        toggle(fields.preview, true);
+        if (dateHelpText) {
+            dateHelpText.textContent = "";
+        }
     }
 }
 
