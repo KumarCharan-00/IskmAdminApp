@@ -11,22 +11,22 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 
-    @Value("${allowed.endpoints.list:}") // optional property, empty by default
+    @Value("${allowed.endpoints.list}") // optional property, empty by default
     private String allowedOrigins;
 
-  @Override
-  @SuppressWarnings("null")
-  public void addCorsMappings(@NonNull CorsRegistry registry) {
+    @Override
+    @SuppressWarnings("null")
+    public void addCorsMappings(@NonNull CorsRegistry registry) {
 
-    var allowedOriginsArray = Arrays.stream((allowedOrigins == null ? "" : allowedOrigins).split(","))
-            .map(String::trim)
-            .filter(s -> !s.isEmpty())
-            .toArray(String[]::new);
+        var allowedOriginsArray = Arrays.stream((allowedOrigins == null ? "" : allowedOrigins).split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toArray(String[]::new);
 
-    registry.addMapping("/**")
-        .allowedOriginPatterns(allowedOriginsArray)
-        .allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
-        .allowedHeaders("*")
-        .allowCredentials(true);
-  }
+        registry.addMapping("/**")
+                .allowedOriginPatterns(allowedOriginsArray)
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true);
+    }
 }
