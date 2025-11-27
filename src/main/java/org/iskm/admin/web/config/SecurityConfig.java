@@ -36,6 +36,7 @@ public class SecurityConfig {
     @Bean
     public RequestMatcher excludedPathMatchers() {
         List<String> excludedPaths = List.of(
+                "/",
                 "/login",
                 "/user/authenticate",
                 "/user/create",
