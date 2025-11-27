@@ -9,6 +9,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Configuration
 public class CorsConfig {
 
@@ -24,8 +27,10 @@ public class CorsConfig {
                 .filter(s -> !s.isEmpty())
                 .toList();
 
-        configuration.setAllowedOriginPatterns(allowedOriginsList);
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        log.info("AllowedOrigins: {}, AllowedOriginList: {}", allowedOrigins, allowedOriginsList);
+
+        configuration.addAllowedOrigin(allowedOrigins);
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
 
