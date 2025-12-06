@@ -158,36 +158,46 @@ public class UserService {
 
     public List<Content> getContent(List<String> types, List<String> byStatus, LocalDateTime from, LocalDateTime to, Integer k) {
         log.info("from :: {} to :: {} byStatus :: {}", from, to, byStatus);
+        List<Content> contentList = new ArrayList<>();
         try {
-            Specification<Content> spec = (root, query, builder) -> {
-                var predicates = new ArrayList<Predicate>();
-                if (types != null && !types.isEmpty()) {
-                    var upperTypes = types.stream().map(String::toUpperCase).toList();
-                    predicates.add(root.get("type").in(upperTypes));
-                }
-                if (byStatus != null && !byStatus.isEmpty()) {
-                    var status = root.get("status");
-                    var lowerCaseStatus = builder.lower(status.as(String.class));
-                    var lowerCaseStatuses = byStatus.stream().map(String::toLowerCase).toList();
-                    predicates.add(lowerCaseStatus.in(lowerCaseStatuses));
-                }
-                if (to != null) {
-                    predicates.add(builder.lessThanOrEqualTo(root.get("createdAt"), to));
-                }
-                if (from != null) {
-                    predicates.add(builder.greaterThanOrEqualTo(root.get("createdAt"), from));
-                }
-                log.info("Predicates :: {}", predicates);
-                return builder.and(predicates.toArray(Predicate[]::new));
-            };
-            if (k != null && k != 0) {
-                return contentRepository.findAll(spec, PageRequest.of(0, k, Sort.by(Sort.Direction.DESC, "createdAt"))).getContent();
+            if (types != null && !types.isEmpty()) {
+                types.stream().distinct().forEach(type
+                        -> contentList.addAll(fetchContent(type, byStatus, from, to, k))
+                );
             } else {
-                return contentRepository.findAll(spec);
+                contentList.addAll(fetchContent(null, byStatus, from, to, k));
             }
+            return contentList;
         } catch (Exception ex) {
             log.error("Fetching content failed with exception ::", ex);
             return List.of();
+        }
+    }
+
+    private List<Content> fetchContent(String type, List<String> byStatus, LocalDateTime from, LocalDateTime to, Integer k) {
+        Specification<Content> spec = (root, query, builder) -> {
+            var predicates = new ArrayList<Predicate>();
+            if (type != null && !type.isBlank()) {
+                predicates.add(builder.equal(builder.upper(root.get("type")), type.toUpperCase()));
+            }
+            if (byStatus != null && !byStatus.isEmpty()) {
+                var status = root.get("status");
+                var lowerCaseStatus = builder.lower(status.as(String.class));
+                var lowerCaseStatuses = byStatus.stream().map(String::toLowerCase).toList();
+                predicates.add(lowerCaseStatus.in(lowerCaseStatuses));
+            }
+            if (to != null) {
+                predicates.add(builder.lessThanOrEqualTo(root.get("createdAt"), to));
+            }
+            if (from != null) {
+                predicates.add(builder.greaterThanOrEqualTo(root.get("createdAt"), from));
+            }
+            return builder.and(predicates.toArray(Predicate[]::new));
+        };
+        if (k != null && k != 0) {
+            return contentRepository.findAll(spec, PageRequest.of(0, k, Sort.by(Sort.Direction.DESC, "createdAt"))).getContent();
+        } else {
+            return contentRepository.findAll(spec);
         }
     }
 
