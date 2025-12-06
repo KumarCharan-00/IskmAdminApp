@@ -177,13 +177,13 @@ function mapToRow(val, idx) {
     if (val) {
         return `
          <th scope="row">${idx + 1}</th>
-         <td>${val.pageTitle.trim()}</td>
+         <td>${val.pageTitle ? val.pageTitle.trim() : ""}</td>
          <td>${val.status}</td>
          <td>
             <a class="" href="#" data-bs-toggle="modal" data-bs-target="#viewContentModal" 
                 onclick=" loadContentInModal(${idx}, '${val.id}', '${
             val.pageTitle
-        }', '${val.pageContent}')">view</a>
+        }', '${val.pageContent ? val.pageContent : ""}')">view</a>
          </td>
          <td></td>
          <td>${dateISOtoReadableFormat(val.createdAt)}</td>
