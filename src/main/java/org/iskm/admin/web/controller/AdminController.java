@@ -2,6 +2,7 @@ package org.iskm.admin.web.controller;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.iskm.admin.web.dto.res.AddUserDTO;
 import org.iskm.admin.web.dto.res.ContentDTO;
@@ -77,7 +78,8 @@ public class AdminController {
 
     @PostMapping("/content")
     public ResponseEntity<String> addContent(@ModelAttribute @NonNull ContentRequest contentRequest) {
-        log.info("Adding content: {}", contentRequest.getTitle());
+        contentRequest.setType(contentRequest.getType().toUpperCase());
+        log.info("Adding content: {} of type {}", contentRequest.getTitle(), contentRequest.getType());
         try {
             var response = userService.saveContent(contentRequest);
             if (response instanceof ContentDTO) {
@@ -92,17 +94,22 @@ public class AdminController {
 
     @GetMapping("/public/content")
     public ResponseEntity<FetchContentResponse> getPublishedContent(
+            @RequestParam(required = false) List<String> type,
             @RequestParam(required = false) String from,
-            @RequestParam(required = false) String to) {
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) Optional<Integer> k) {
         log.info("Fetching published content from: {} to: {}", from, to);
-        return getAllContent(List.of("published"), from, to);
+        return getAllContent(type, List.of("published"), from, to, k.or(() -> Optional.of(0)));
     }
 
     @GetMapping("/content")
-    public ResponseEntity<FetchContentResponse> getAllContent(@RequestParam(required = false) List<String> status,
+    public ResponseEntity<FetchContentResponse> getAllContent(
+            @RequestParam(required = false) List<String> type,
+            @RequestParam(required = false) List<String> status,
             @RequestParam(required = false) String from,
-            @RequestParam(required = false) String to) {
-        log.info("Fetching {} content from: {} to: {}", status, from, to);
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) Optional<Integer> k) {
+        log.info("Fetching {} {} content from: {} to: {} limit to {}", type, status, from, to, k.orElse(0));
         LocalDateTime fromDateTime = null;
         LocalDateTime toDateTime = null;
 
@@ -116,7 +123,7 @@ public class AdminController {
         }
 
         var response = new FetchContentResponse();
-        var dtoList = userService.getContent(status, fromDateTime, toDateTime).stream()
+        var dtoList = userService.getContent(type, status, fromDateTime, toDateTime, k.orElse(0)).stream()
                 .map(userService::toContentDTO)
                 .toList();
         var count = dtoList.size();

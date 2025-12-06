@@ -20,16 +20,17 @@ import org.iskm.admin.web.model.entity.Content;
 import org.iskm.admin.web.model.entity.Image;
 import org.iskm.admin.web.model.entity.User;
 import org.iskm.admin.web.repository.ContentRepository;
+import org.iskm.admin.web.repository.ImageRepository;
 import org.iskm.admin.web.repository.UserRepo;
 import org.iskm.admin.web.repository.UserRepository;
-import org.iskm.admin.web.repository.ImageRepository;
 import org.iskm.admin.web.util.CommonUtil;
 import org.iskm.admin.web.util.PasswordUtil;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -155,11 +156,15 @@ public class UserService {
         }
     }
 
-    public List<Content> getContent(List<String> byStatus, LocalDateTime from, LocalDateTime to) {
+    public List<Content> getContent(List<String> types, List<String> byStatus, LocalDateTime from, LocalDateTime to, Integer k) {
         log.info("from :: {} to :: {} byStatus :: {}", from, to, byStatus);
         try {
             Specification<Content> spec = (root, query, builder) -> {
                 var predicates = new ArrayList<Predicate>();
+                if (types != null && !types.isEmpty()) {
+                    var upperTypes = types.stream().map(String::toUpperCase).toList();
+                    predicates.add(root.get("type").in(upperTypes));
+                }
                 if (byStatus != null && !byStatus.isEmpty()) {
                     var status = root.get("status");
                     var lowerCaseStatus = builder.lower(status.as(String.class));
@@ -175,7 +180,11 @@ public class UserService {
                 log.info("Predicates :: {}", predicates);
                 return builder.and(predicates.toArray(Predicate[]::new));
             };
-            return contentRepository.findAll(spec);
+            if (k != null && k != 0) {
+                return contentRepository.findAll(spec, PageRequest.of(0, k, Sort.by(Sort.Direction.DESC, "createdAt"))).getContent();
+            } else {
+                return contentRepository.findAll(spec);
+            }
         } catch (Exception ex) {
             log.error("Fetching content failed with exception ::", ex);
             return List.of();
@@ -196,6 +205,7 @@ public class UserService {
         dto.setShowDonation(content.getShowDonation());
         dto.setLocation(content.getLocation());
         dto.setCreatedAt(content.getCreatedAt());
+        dto.setImages(mapImages(content.getImages()));
         return dto;
     }
 
@@ -269,4 +279,14 @@ public class UserService {
         )).toList();
     }
 
+    private List<ImageDTO> mapImages(List<Image> images) {
+        return images.stream()
+                .map(image -> new ImageDTO(
+                image.getId(),
+                image.getImageData(),
+                image.getExpiresAt(),
+                image.getCreatedAt()
+        ))
+                .toList();
+    }
 }
