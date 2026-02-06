@@ -25,7 +25,7 @@ public class SponsorsController {
         this.sponsorService = sponsorService;
     }
 
-    @PostMapping("/generate-pay-req")
+    @PostMapping("/pay-req")
     public ResponseEntity<RPPaymentRequest> addSponser(@RequestBody OrderRequestDetails req) {
         log.info("Generating payment request for donor: {}", req);
         return ResponseEntity.ok(sponsorService.generatePaymentRequest(req));

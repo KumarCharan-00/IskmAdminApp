@@ -108,8 +108,8 @@ public class AdminController {
             @RequestParam(required = false) List<String> status,
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to,
-            @RequestParam(required = false) Optional<Integer> k) {
-        log.info("Fetching {} {} content from: {} to: {} limit to {}", type, status, from, to, k.orElse(0));
+            @RequestParam(required = false) Optional<Integer> count) {
+        log.info("Fetching {} {} content from: {} to: {} limit to {}", type, status, from, to, count.orElse(0));
         LocalDateTime fromDateTime = null;
         LocalDateTime toDateTime = null;
 
@@ -123,13 +123,13 @@ public class AdminController {
         }
 
         var response = new FetchContentResponse();
-        var dtoList = userService.getContent(type, status, fromDateTime, toDateTime, k.orElse(0)).stream()
+        var dtoList = userService.getContent(type, status, fromDateTime, toDateTime, count.orElse(0)).stream()
                 .map(userService::toContentDTO)
                 .toList();
-        var count = dtoList.size();
+        var size = dtoList.size();
         response.setContent(dtoList);
-        response.setCount(count);
-        log.info("Response count: {}", count);
+        response.setCount(size);
+        log.info("Response count: {}", size);
         return ResponseEntity.ok(response);
     }
 
