@@ -252,6 +252,34 @@ function loadContentInModal(idx) {
         label.textContent = val.title || "";
         bodyContainer.innerHTML = "";
 
+        if (val.type.toUpperCase() === "FESTIVAL") {
+            let locationDiv = document.createElement("div");
+            locationDiv.innerHTML = `
+                <label for="viewContentModalLocation" class="form-label fw-bold">Location</label>
+                <textarea class="modal-body form-control" id="viewContentModalLocation" style="height: 4rem" disabled>${val.location || ""}</textarea>
+            `;
+            bodyContainer.appendChild(locationDiv);
+        }
+
+        if (
+            val.type.toUpperCase() === "FESTIVAL" ||
+            val.type.toUpperCase() === "SEVA"
+        ) {
+            let datesDiv = document.createElement("div");
+            datesDiv.className = "d-flex flex-row gap-2";
+            datesDiv.innerHTML = `
+            <div class="col-6">
+                <label for="viewContentModalFromDate" class="form-label fw-bold">From Date</label>
+                <input type="text" class="modal-body form-control" id="viewContentModalFromDate" style="height: 4rem" disabled>${val.fromDate || ""}</input>
+            </div>
+            <div class="col-6">
+                <label for="viewContentModalToDate" class="form-label fw-bold">To Date</label>
+                <input type="text" class="modal-body form-control" id="viewContentModalToDate" style="height: 4rem" disabled>${val.toDate || ""}</input>
+            </div>
+            `;
+            bodyContainer.appendChild(datesDiv);
+        }
+
         let previewDiv = document.createElement("div");
         previewDiv.innerHTML = `
                 <label for="viewContentModalPreview" class="form-label fw-bold">Short Text (Preview)</label>
@@ -280,27 +308,6 @@ function loadContentInModal(idx) {
             <label class="form-check-label fw-bold" for="viewContentModalShowDonation">Show donation option</label>
         `;
         bodyContainer.appendChild(donationDiv);
-
-        if (
-            val.type.toUpperCase() === "FESTIVAL" ||
-            val.type.toUpperCase() === "SEVA" ||
-            val.type.toUpperCase() === "BLOG"
-        ) {
-        }
-
-        if (
-            val.type.toUpperCase() === "FESTIVAL" ||
-            val.type.toUpperCase() === "SEVA" ||
-            val.type.toUpperCase() === "BLOG"
-        ) {
-        }
-
-        if (
-            val.type.toUpperCase() === "FESTIVAL" ||
-            val.type.toUpperCase() === "SEVA" ||
-            val.type.toUpperCase() === "BLOG"
-        ) {
-        }
     }
 
     contentModal.idx = idx;
