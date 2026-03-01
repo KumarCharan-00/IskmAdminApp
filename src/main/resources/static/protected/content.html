@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
@@ -411,14 +411,18 @@
                                             <button
                                                 type="button"
                                                 class="btn btn-outline-primary btn-sm"
-                                                onclick="editContentModalTitle(true)"
+                                                onclick="
+                                                    editContentModalTitle(true)
+                                                "
                                             >
                                                 <i class="bi bi-check2"></i>
                                             </button>
                                             <button
                                                 type="button"
                                                 class="btn btn-outline-danger btn-sm"
-                                                onclick="editContentModalTitle(false)"
+                                                onclick="
+                                                    editContentModalTitle(false)
+                                                "
                                             >
                                                 <i class="bi bi-x"></i>
                                             </button>
@@ -435,20 +439,10 @@
                                     </h1>
                                     <!--<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>-->
                                 </div>
-                                <div>
-                                    <label
-                                        for="viewContentModalBody"
-                                        class="visually-hidden"
-                                        >Uploaded Content</label
-                                    >
-                                    <textarea
-                                        class="modal-body form-control"
-                                        placeholder
-                                        id="viewContentModalBody"
-                                        style="height: 50vh"
-                                        disabled
-                                    ></textarea>
-                                </div>
+                                <div
+                                    id="viewContentModalDynamicBody"
+                                    class="modal-body d-flex flex-column gap-3 p-3"
+                                ></div>
                                 <div class="modal-footer">
                                     <button
                                         type="button"
@@ -481,68 +475,13 @@
                                 <th scope="col">#</th>
                                 <th scope="col">Title</th>
                                 <th scope="col">State</th>
+                                <th scope="col">Type</th>
                                 <th scope="col">Actions</th>
                                 <th scope="col">Images</th>
-                                <th scope="col">Created At</th>
+                                <th scope="col">Created On</th>
                             </tr>
                         </thead>
-                        <tbody class="content-data">
-                            <!--<th scope="row">Ram</th>
-            <td>some-title</td>
-            <td>Published</td>
-            <td>
-              &lt;!&ndash;<a class="" href="#" data-bs-toggle="modal" data-bs-target="#viewContentModal">view</a>
-              <div class="modal fade" id="viewContentModal" tabindex="-1" aria-labelledby="viewContentModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h1 class="modal-title fs-5 text-dark contentModalTitle">
-                        <label for="viewContentModalInput" id="viewContentModalLabel"></label>
-                        <span id="viewContentModalInputGrp" class="input-group visually-hidden">
-                          <input type="text" id="viewContentModalInput" class="input-text form-control" placeholder readonly>
-                          <button type="button" class="btn btn-outline-primary btn-sm" onclick="editContentModalTitle(true)"><i class="bi bi-check2"></i></button>
-                          <button type="button" class="btn btn-outline-danger btn-sm" onclick="editContentModalTitle(false)"><i class="bi bi-x"></i></button>
-                        </span>
-                        <span id="editContentModalTitleIcon" class="text-dark" onclick="editContentModalTitle()"><a href="#"><i class="bi bi-pencil-square"></i></a></span>
-                      </h1>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div>
-                      <label for="viewContentModalBody" class="visually-hidden">Uploaded Content</label>
-                      <textarea class="modal-body form-control" placeholder id="viewContentModalBody"
-                                style="height: 50vw" disabled>
-                        Why the Calendar Inputs Stretch form-control by default is width: 100%
-                          Bootstrap’s .form-control class is designed to fill its container.
-                          So if the parent is a flex item with available space, the input will stretch.
-                          Flex container behavior
-                          When you wrap the calendar inputs and Apply button inside a flex container (d-inline-flex or d-flex), each child (like the input group) becomes a flex item.
-                          If you don’t constrain the width, the input will expand to fill the row.
-                          Responsive shrinking
-                          On smaller screens, the flex container wraps or compresses, so the inputs shrink accordingly. /n
-
-                        Why the Calendar Inputs Stretch
-                          form-control by default is width: 100%
-                          Bootstrap’s .form-control class is designed to fill its container.
-                          So if the parent is a flex item with available space, the input will stretch.
-                          Flex container behavior
-                          When you wrap the calendar inputs and Apply button inside a flex container (d-inline-flex or d-flex), each child (like the input group) becomes a flex item.
-                          If you don’t constrain the width, the input will expand to fill the row.
-                          Responsive shrinking
-                          On smaller screens, the flex container wraps or compresses, so the inputs shrink accordingly.
-                      </textarea>
-                      </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-outline-danger btn-sm" data-bs-target="#viewContentModal" aria-label="Close" onclick="closeContentModal('')">Close</button>
-                      <button type="button" class="btn btn-outline-secondary btn-sm editContentBody" onclick="enableContentEditMode()">Edit</button>
-                      <button type="button" class="btn btn-outline-secondary btn-sm editContentSaveOption" onclick="saveContentById(id)" disabled>Save changes</button>
-                    </div>
-                  </div>
-                </div>
-              </div>&ndash;&gt;
-            </td>
-            <td></td>
-            <td></td>-->
-                        </tbody>
+                        <tbody class="content-data"></tbody>
                     </table>
                 </div>
             </div>

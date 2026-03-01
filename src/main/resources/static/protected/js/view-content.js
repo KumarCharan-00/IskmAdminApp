@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", dateRangePicker);
 document.addEventListener("DOMContentLoaded", selectedStatus);
 
 let contentTableDTInstance;
+let loadedContentData = [];
 
 function viewContent(status, startDate, endDate) {
     setActive("btn-show-uploaded");
@@ -39,7 +40,7 @@ function selectedStatus() {
             console.log("Listening Click on ", item.textContent);
             const label = item.textContent.trim().toUpperCase();
             const badgePresent = badgeContainer.querySelector(
-                `.badge[data-status="${label}"]`
+                `.badge[data-status="${label}"]`,
             );
 
             if (item.classList.contains("selected") && !badgePresent) {
@@ -83,7 +84,7 @@ document.getElementById("ApplyFilters").addEventListener(
         }
         console.log(filters);
         viewContent(filters.status, startDate, endDate);
-    }, 500)
+    }, 500),
 );
 
 function loadContent(filters) {
@@ -104,6 +105,7 @@ function populateTable(res) {
 
         if (res.content && res.content.length > 0) {
             loadModalSkeleton();
+            loadedContentData = res.content;
             res.content.forEach((val, idx) => {
                 console.log(`${idx} and ${val}`);
                 console.log(val);
@@ -121,14 +123,15 @@ function populateTable(res) {
             responsive: true,
             columns: [
                 { data: "id", className: "text-center" },
-                { data: "pageTitle" },
+                { data: "title" },
                 { data: "status" },
+                { data: "type" },
                 { data: "actions", className: "text-center" },
                 { data: "images", className: "text-center" },
                 { data: "createdAt" },
             ],
             columnDefs: [
-                { orderable: false, targets: [3, 4] }, // Disable sorting on action buttons
+                { orderable: false, targets: [4, 5] }, // Disable sorting on action buttons
             ],
             language: {
                 search: "Search Content",
@@ -169,21 +172,24 @@ function populateTable(res) {
 const contentModal = {
     idx: -1,
     id: "",
-    content: "",
     title: "",
+    previewText: "",
+    fullText: "",
+    quote: "",
+    type: "",
+    showDonation: false,
 };
 
 function mapToRow(val, idx) {
     if (val) {
         return `
          <th scope="row">${idx + 1}</th>
-         <td>${val.pageTitle ? val.pageTitle.trim() : ""}</td>
+         <td>${val.title ? val.title.trim() : ""}</td>
          <td>${val.status}</td>
+         <td>${val.type}</td>
          <td>
             <a class="" href="#" data-bs-toggle="modal" data-bs-target="#viewContentModal" 
-                onclick=" loadContentInModal(${idx}, '${val.id}', '${
-            val.pageTitle
-        }', '${val.pageContent ? val.pageContent : ""}')">view</a>
+                onclick="loadContentInModal(${idx})">view</a>
          </td>
          <td></td>
          <td>${dateISOtoReadableFormat(val.createdAt)}</td>
@@ -219,32 +225,90 @@ function loadModalSkeleton() {
         let closeBtnLockHandler = createLockHandler(closeContentModal, 200);
         let saveBtnLockHandler = createLockHandler(saveContentById, 1000);
         closeBtn.addEventListener("click", () =>
-            closeBtnLockHandler(contentModal.content)
+            closeBtnLockHandler(contentModal.content),
         );
         stateBtn.addEventListener("click", () => stateBtnLockHandler());
         saveBtn.addEventListener("click", () =>
-            saveBtnLockHandler(
-                contentModal.idx,
-                contentModal.id,
-                contentModal.title,
-                contentModal.content
-            )
+            saveBtnLockHandler(contentModal.idx, contentModal.id),
         );
     }
 }
 
-function loadContentInModal(idx, id, title, content) {
+function loadContentInModal(idx) {
+    const val = loadedContentData[idx];
     const viewContentModal = document.getElementById("viewContentModal");
     const label = viewContentModal.querySelector("#viewContentModalLabel");
-    const body = viewContentModal.querySelector("#viewContentModalBody");
-    if (label && body) {
-        label.textContent = title;
-        body.value = content;
+    const bodyContainer = document.getElementById(
+        "viewContentModalDynamicBody",
+    );
+    console.log("val", val);
+    console.log("label", label);
+    console.log("bodyContainer", bodyContainer);
+    if (label && bodyContainer) {
+        label.textContent = val.title || "";
+        bodyContainer.innerHTML = "";
+
+        let previewDiv = document.createElement("div");
+        previewDiv.innerHTML = `
+                <label for="viewContentModalPreview" class="form-label fw-bold">Short Text (Preview)</label>
+                <textarea class="modal-body form-control" id="viewContentModalPreview" style="height: 4rem" disabled>${val.previewText || ""}</textarea>
+            `;
+        bodyContainer.appendChild(previewDiv);
+
+        let quoteDiv = document.createElement("div");
+        quoteDiv.innerHTML = `
+                <label for="viewContentModalQuote" class="form-label fw-bold">Quote</label>
+                <textarea class="modal-body form-control" id="viewContentModalQuote" style="height: 4rem" disabled>${val.quote || ""}</textarea>
+            `;
+        bodyContainer.appendChild(quoteDiv);
+
+        let contentDiv = document.createElement("div");
+        contentDiv.innerHTML = `
+                <label for="viewContentModalFullText" class="form-label fw-bold">Long Text (Content)</label>
+                <textarea class="modal-body form-control" id="viewContentModalFullText" style="height: 10rem" disabled>${val.fullText || ""}</textarea>
+            `;
+        bodyContainer.appendChild(contentDiv);
+
+        let donationDiv = document.createElement("div");
+        donationDiv.className = "form-check form-switch mt-3";
+        donationDiv.innerHTML = `
+            <input class="form-check-input" type="checkbox" role="switch" id="viewContentModalShowDonation" ${val.showDonation ? "checked" : ""} disabled>
+            <label class="form-check-label fw-bold" for="viewContentModalShowDonation">Show donation option</label>
+        `;
+        bodyContainer.appendChild(donationDiv);
+
+        if (
+            val.type.toUpperCase() === "FESTIVAL" ||
+            val.type.toUpperCase() === "SEVA" ||
+            val.type.toUpperCase() === "BLOG"
+        ) {
+        }
+
+        if (
+            val.type.toUpperCase() === "FESTIVAL" ||
+            val.type.toUpperCase() === "SEVA" ||
+            val.type.toUpperCase() === "BLOG"
+        ) {
+        }
+
+        if (
+            val.type.toUpperCase() === "FESTIVAL" ||
+            val.type.toUpperCase() === "SEVA" ||
+            val.type.toUpperCase() === "BLOG"
+        ) {
+        }
     }
+
     contentModal.idx = idx;
-    contentModal.id = id;
-    contentModal.title = title;
-    contentModal.content = content;
+    contentModal.id = val.id;
+    contentModal.title = val.title || "";
+    contentModal.previewText = val.previewText || "";
+    contentModal.fullText = val.fullText || "";
+    contentModal.quote = val.quote || "";
+    contentModal.type = val.type;
+    contentModal.showDonation = val.showDonation || false;
+
+    console.log("contentModal", contentModal);
 }
 window.loadContentInModal = loadContentInModal;
 
@@ -292,34 +356,54 @@ let contentModifiedListener = () => {
 let editMode = false;
 
 function switchContentMode() {
-    const textArea = document.getElementById("viewContentModalBody");
+    const disableableElements = document.querySelectorAll(
+        "#viewContentModalDynamicBody textarea, #viewContentModalDynamicBody input",
+    );
     const contentBodyEditMode = document.querySelector(".modalStateBtn");
-    if (textArea && contentBodyEditMode) {
-        textArea.disabled = !textArea.disabled;
-        contentBodyEditMode.textContent = textArea.disabled
-            ? "Edit"
-            : "Read-Only";
-        editMode = !textArea.disabled;
+    if (disableableElements.length > 0 && contentBodyEditMode) {
+        let isDisabled = disableableElements[0].disabled;
+        disableableElements.forEach((el) => (el.disabled = !isDisabled));
+
+        contentBodyEditMode.textContent = isDisabled ? "Read-Only" : "Edit";
+
+        editMode = isDisabled;
         if (editMode) {
             console.log("Adding input event listener");
             document.addEventListener("input", contentModifiedListener, {
                 once: true,
             });
+            document.addEventListener("change", contentModifiedListener, {
+                once: true,
+            });
         } else {
             console.log("Removing input event listener");
             document.removeEventListener("input", contentModifiedListener);
+            document.removeEventListener("change", contentModifiedListener);
         }
     }
 }
 window.switchContentMode = switchContentMode;
 
-function closeContentModal(content) {
-    const contentBody = document.getElementById("viewContentModalBody");
-    // content = contentBody.value; // for testing
-    console.log("content ", content ? content : "IS_EMPTY");
-    if (content && contentBody && content !== contentBody.value) {
+function closeContentModal() {
+    const previewArea = document.getElementById("viewContentModalPreview");
+    const fullTextArea = document.getElementById("viewContentModalFullText");
+    const quoteArea = document.getElementById("viewContentModalQuote");
+    const donationSwitch = document.getElementById(
+        "viewContentModalShowDonation",
+    );
+
+    let hasChanges = false;
+    if (previewArea && contentModal.previewText !== previewArea.value)
+        hasChanges = true;
+    if (fullTextArea && contentModal.fullText !== fullTextArea.value)
+        hasChanges = true;
+    if (quoteArea && contentModal.quote !== quoteArea.value) hasChanges = true;
+    if (donationSwitch && contentModal.showDonation !== donationSwitch.checked)
+        hasChanges = true;
+
+    if (hasChanges) {
         const confirmed = confirm(
-            "Closing without Saving new changes will result in loss of changes.\nClick on OK if you are sure you want to close?"
+            "Closing without Saving new changes will result in loss of changes.\nClick on OK if you are sure you want to close?",
         );
         if (!confirmed) {
             return;
@@ -337,18 +421,35 @@ function closeContentModal(content) {
 }
 window.closeContentModal = closeContentModal;
 
-function saveContentById(idx, contentId, title, content) {
-    const bodyNode = document.getElementById("viewContentModalBody");
+function saveContentById(idx, contentId) {
     const titleNode = document.getElementById("viewContentModalLabel");
+    const previewArea = document.getElementById("viewContentModalPreview");
+    const fullTextArea = document.getElementById("viewContentModalFullText");
+    const quoteArea = document.getElementById("viewContentModalQuote");
+    const donationSwitch = document.getElementById(
+        "viewContentModalShowDonation",
+    );
+
     let body = {};
-    console.log(title, " == ", titleNode.textContent);
-    console.log(content, " == ", bodyNode.value);
-    if (content && bodyNode && content !== bodyNode.value) {
-        body.pageContent = bodyNode.value;
+    if (titleNode && contentModal.title !== titleNode.textContent) {
+        body.title = titleNode.textContent;
     }
-    if (title && titleNode && title !== titleNode.textContent) {
-        body.pageTitle = titleNode.textContent;
+    if (previewArea && contentModal.previewText !== previewArea.value) {
+        body.previewText = previewArea.value;
     }
+    if (fullTextArea && contentModal.fullText !== fullTextArea.value) {
+        body.fullText = fullTextArea.value;
+    }
+    if (quoteArea && contentModal.quote !== quoteArea.value) {
+        body.quote = quoteArea.value;
+    }
+    if (
+        donationSwitch &&
+        contentModal.showDonation !== donationSwitch.checked
+    ) {
+        body.showDonation = donationSwitch.checked;
+    }
+
     const response = apiJson("PATCH", `/content/${contentId}`, { body });
     response.then((json) => popup(idx, json));
     // return response;
@@ -358,14 +459,23 @@ window.saveContentById = saveContentById;
 function popup(idx, json) {
     console.log(json);
     if (json && !json.errorMessage) {
-        contentModal.content = json.pageContent;
-        contentModal.title = json.pageTitle;
+        contentModal.previewText = json.previewText;
+        contentModal.fullText = json.fullText;
+        contentModal.quote = json.quote;
+        contentModal.title = json.title;
+        if (json.showDonation !== undefined)
+            contentModal.showDonation = json.showDonation;
+
+        loadedContentData[idx] = Object.assign(
+            {},
+            loadedContentData[idx],
+            json,
+        );
+
         const newData = contentTableDTInstance.row(idx).data();
-        newData.pageTitle = json.pageTitle;
+        newData.title = json.title;
         newData.actions = `<a class="" href="#" data-bs-toggle="modal" data-bs-target="#viewContentModal"
-                            onclick=" loadContentInModal(${idx}, '${
-            json.id
-        }', '${json.pageTitle.trim()}', '${json.pageContent}')">view</a>`;
+                            onclick=" loadContentInModal(${idx})">view</a>`;
         contentTableDTInstance.row(idx).data(newData).draw(false);
         console.log(contentTableDTInstance.row(idx).data());
         console.log(contentTableDTInstance.row(idx).node());

@@ -134,8 +134,8 @@ public class AdminController {
     }
 
     @PatchMapping("/content/{id}")
-    public ResponseEntity<ContentDTO> patchContentById(@PathVariable String id,
-            @RequestBody ContentUpdateRequest request) {
+    public ResponseEntity<ContentDTO> patchContentById(@PathVariable @NonNull String id,
+            @RequestBody @NonNull ContentUpdateRequest request) {
         log.info("Patching content: {}", id);
         ContentDTO content = userService.partialUpdateById(id, request);
         return ResponseEntity.ok(content);
