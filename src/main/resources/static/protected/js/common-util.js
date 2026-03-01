@@ -139,3 +139,18 @@ export function dateRangePicker() {
         });
     });
 }
+
+export function dateISOtoReadableFormat(isoDateStr) {
+    const date = new Date(isoDateStr);
+
+    const options = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+    };
+    return date.toLocaleString("en-US", options);
+}

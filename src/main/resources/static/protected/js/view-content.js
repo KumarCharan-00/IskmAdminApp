@@ -5,6 +5,7 @@ import {
     api,
     createLockHandler,
     dateRangePicker,
+    dateISOtoReadableFormat,
 } from "./common-util.js";
 
 // Event Listeners
@@ -204,21 +205,6 @@ function mapToRow(val, idx) {
     }
 }
 
-function dateISOtoReadableFormat(isoDateStr) {
-    const date = new Date(isoDateStr);
-
-    const options = {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false,
-    };
-    return date.toLocaleString("en-US", options);
-}
-
 function loadModalSkeleton() {
     const footer = document.querySelector(".modal-footer");
     const closeBtn = footer.querySelector(".modalCloseBtn");
@@ -270,14 +256,17 @@ function loadContentInModal(idx) {
             datesDiv.innerHTML = `
             <div class="col-6">
                 <label for="viewContentModalFromDate" class="form-label fw-bold">From Date</label>
-                <input type="text" class="modal-body form-control" id="viewContentModalFromDate" style="height: 4rem" disabled>${val.fromDate || ""}</input>
+                <input type="text" class="modal-body form-control calendarInput" id="viewContentModalFromDate" style="height: 4rem" disabled value="${val.showFromDate || ""}">
             </div>
             <div class="col-6">
                 <label for="viewContentModalToDate" class="form-label fw-bold">To Date</label>
-                <input type="text" class="modal-body form-control" id="viewContentModalToDate" style="height: 4rem" disabled>${val.toDate || ""}</input>
+                <input type="text" class="modal-body form-control calendarInput" id="viewContentModalToDate" style="height: 4rem" disabled value="${val.showToDate || ""}">
             </div>
             `;
             bodyContainer.appendChild(datesDiv);
+
+            // Initialize the datepicker for the newly added elements
+            dateRangePicker();
         }
 
         let previewDiv = document.createElement("div");
