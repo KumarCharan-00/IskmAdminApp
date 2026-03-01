@@ -2,6 +2,7 @@ import {
     setActive,
     showOutputPanel,
     apiJson,
+    api,
     createLockHandler,
     dateRangePicker,
 } from "./common-util.js";
@@ -191,7 +192,10 @@ function mapToRow(val, idx) {
             <a class="" href="#" data-bs-toggle="modal" data-bs-target="#viewContentModal" 
                 onclick="loadContentInModal(${idx})">view</a>
          </td>
-         <td></td>
+         <td>
+            <a class="" href="#" data-bs-toggle="modal" data-bs-target="#viewImagesModal" 
+                onclick="loadImagesInModal(${idx})">view</a>
+         </td>
          <td>${dateISOtoReadableFormat(val.createdAt)}</td>
         `;
     } else {
@@ -475,11 +479,125 @@ function popup(idx, json) {
         const newData = contentTableDTInstance.row(idx).data();
         newData.title = json.title;
         newData.actions = `<a class="" href="#" data-bs-toggle="modal" data-bs-target="#viewContentModal"
-                            onclick=" loadContentInModal(${idx})">view</a>`;
+                            onclick="loadContentInModal(${idx})">view</a>`;
+        newData.images = `<a class="" href="#" data-bs-toggle="modal" data-bs-target="#viewImagesModal"
+                            onclick="loadImagesInModal(${idx})">images</a>`;
         contentTableDTInstance.row(idx).data(newData).draw(false);
         console.log(contentTableDTInstance.row(idx).data());
         console.log(contentTableDTInstance.row(idx).node());
         saveBtnEnabled = false;
         contentModified(false);
     }
+}
+
+// ----------------- image operations -----------------
+
+let currentImageModalIdx = -1;
+
+function loadImagesInModal(idx) {
+    currentImageModalIdx = idx;
+    const val = loadedContentData[idx];
+    console.log("Images val: ", val);
+    renderImagesTable(val.id, val.images || []);
+    const btnUpload = document.getElementById("btnUploadNewImages");
+    if (btnUpload) {
+        btnUpload.onclick = () => uploadNewImages(val.id);
+    }
+}
+window.loadImagesInModal = loadImagesInModal;
+
+function renderImagesTable(contentId, images) {
+    const bodyContainer = document.getElementById("viewImagesModalDynamicBody");
+    if (!bodyContainer) return;
+
+    if (!images || images.length === 0) {
+        bodyContainer.innerHTML =
+            "<p class='text-muted'>No images found for this content.</p>";
+        return;
+    }
+
+    bodyContainer.innerHTML = images
+        .map(
+            (img) => `
+            <div class="card" style="width: 12rem;">
+                <img src="data:image/jpeg;base64,${img.imageData}" class="card-img-top" style="height: 10rem; object-fit: cover;" alt="Image">
+                <div class="card-body text-center p-2">
+                    <button class="btn btn-outline-danger btn-sm w-100" onclick="deleteExistingImage('${img.id}', '${contentId}')">Delete</button>
+                </div>
+            </div>`,
+        )
+        .join("");
+}
+
+function deleteExistingImage(imageId, contentId) {
+    if (!confirm("Are you sure you want to delete this image?")) return;
+
+    api("DELETE", `/images/${imageId}`, {
+        method: "DELETE",
+    })
+        .then((res) => {
+            console.log("Delete response: ", res);
+            if (res?.status?.toString().startsWith("2")) {
+                alert("Image deleted successfully!");
+                // Refresh images list from API
+                refreshImagesForCurrentContent(contentId);
+            } else {
+                alert("Failed to delete image.");
+            }
+        })
+        .catch((e) => {
+            console.error("Delete error", e);
+            alert("Error while deleting image.");
+        });
+}
+window.deleteExistingImage = deleteExistingImage;
+
+function uploadNewImages(contentId) {
+    const input = document.getElementById("newImagesUpload");
+    if (!input || !input.files || input.files.length === 0) {
+        alert("Please select images to upload first.");
+        return;
+    }
+
+    const formData = new FormData();
+    for (let i = 0; i < input.files.length; i++) {
+        formData.append("images", input.files[i]);
+    }
+
+    console.log("Uploading images for content id: ", contentId);
+    console.log("Form data: ", formData);
+    api("POST", `/images/${contentId}`, {
+        method: "POST",
+        body: formData,
+    })
+        .then(async (response) => {
+            if (response?.status?.toString().startsWith("2")) {
+                alert("Images uploaded successfully!");
+                input.value = ""; // Clear selection
+                refreshImagesForCurrentContent(contentId);
+            } else {
+                alert("Failed to upload images: " + (await response.text()));
+            }
+        })
+        .catch((e) => {
+            console.error("Upload error", e);
+            alert("Error while uploading images");
+        });
+}
+
+function refreshImagesForCurrentContent(contentId) {
+    console.log("Current Image Modal Id: ", currentImageModalIdx);
+    if (currentImageModalIdx === -1) return;
+    console.log("Refreshing images for content id: ", contentId);
+    apiJson("GET", `/images/${contentId}`).then((images) => {
+        // Handle no content (API returns null or error if empty sometimes, or empty array)
+        if (images && images.errorMessage) {
+            loadedContentData[currentImageModalIdx].images = [];
+            renderImagesTable(contentId, []);
+        } else {
+            const safeImages = Array.isArray(images) ? images : [];
+            loadedContentData[currentImageModalIdx].images = safeImages;
+            renderImagesTable(contentId, safeImages);
+        }
+    });
 }

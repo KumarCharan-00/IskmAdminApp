@@ -234,6 +234,42 @@ public class UserService {
     }
 
     @Transactional
+    public void deleteImage(@NonNull Long imageId) {
+        try {
+            if (!imageRepository.existsById(imageId)) {
+                throw new EntityNotFoundException("Image not found");
+            }
+            imageRepository.deleteById(imageId);
+        } catch (Exception ex) {
+            log.error("deleting image failed with exception :: ", ex);
+            throw new RuntimeException("deleting image failed", ex);
+        }
+    }
+
+    @Transactional
+    public void addImagesToContent(@NonNull String contentId, List<MultipartFile> files) {
+        try {
+            Content content = contentRepository.findById(contentId)
+                    .orElseThrow(() -> new EntityNotFoundException("Content not found with id: " + contentId));
+            
+            if (files != null && !files.isEmpty()) {
+                List<Image> imageList = new ArrayList<>();
+                for (MultipartFile file : files) {
+                    if (file != null && !file.isEmpty()) {
+                        processImage(file, imageList, content);
+                    }
+                }
+                if (!imageList.isEmpty()) {
+                    imageRepository.saveAll(imageList);
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Adding images to content failed with exception :: ", ex);
+            throw new RuntimeException("Failed to add images", ex);
+        }
+    }
+
+    @Transactional
     public ContentDTO partialUpdateById(@NonNull String id, ContentUpdateRequest request) {
         try {
             Content content = contentRepository.findById(id)

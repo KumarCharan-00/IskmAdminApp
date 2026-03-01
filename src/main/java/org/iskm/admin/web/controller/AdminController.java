@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -156,4 +157,17 @@ public class AdminController {
         return ResponseEntity.ok(images);
     }
 
+    @DeleteMapping("/images/{imageId}")
+    public ResponseEntity<Void> deleteImage(@PathVariable @NonNull Long imageId) {
+        log.info("Deleting image: {}", imageId);
+        userService.deleteImage(imageId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/images/{contentId}")
+    public ResponseEntity<String> uploadImages(@PathVariable @NonNull String contentId, @RequestParam("images") List<MultipartFile> files) {
+        log.info("Uploading {} images for content: {}", files.size(), contentId);
+        userService.addImagesToContent(contentId, files);
+        return ResponseEntity.ok("Images uploaded successfully");
+    }
 }

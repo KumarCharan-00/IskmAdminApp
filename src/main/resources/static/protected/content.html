@@ -469,6 +469,72 @@
                             </div>
                         </div>
                     </div>
+                    <div
+                        class="modal fade"
+                        id="viewImagesModal"
+                        tabindex="-1"
+                        aria-labelledby="viewImagesModalLabel"
+                        aria-hidden="true"
+                    >
+                        <div
+                            class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable"
+                        >
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h1
+                                        class="modal-title fs-5 text-dark"
+                                        id="viewImagesModalLabel"
+                                    >
+                                        Manage Images
+                                    </h1>
+                                    <button
+                                        type="button"
+                                        class="btn-close"
+                                        data-bs-dismiss="modal"
+                                        aria-label="Close"
+                                    ></button>
+                                </div>
+                                <div class="modal-body p-3">
+                                    <div class="mb-4">
+                                        <label
+                                            for="newImagesUpload"
+                                            class="form-label fw-bold"
+                                            >Upload New Images</label
+                                        >
+                                        <div class="input-group">
+                                            <input
+                                                type="file"
+                                                class="form-control"
+                                                id="newImagesUpload"
+                                                multiple
+                                                accept="image/*"
+                                            />
+                                            <button
+                                                class="btn btn-primary"
+                                                type="button"
+                                                id="btnUploadNewImages"
+                                            >
+                                                Upload
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div
+                                        id="viewImagesModalDynamicBody"
+                                        class="d-flex flex-wrap gap-3 justify-content-center"
+                                    ></div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-secondary btn-sm"
+                                        data-bs-dismiss="modal"
+                                    >
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <table id="contentTable" class="table">
                         <thead>
                             <tr>

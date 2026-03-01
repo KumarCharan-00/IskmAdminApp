@@ -1,4 +1,4 @@
-const allowedMethods = ["GET", "POST", "PATCH"];
+const allowedMethods = ["GET", "POST", "PATCH", "DELETE"];
 
 export function setActive(buttonId) {
     const buttons = document.querySelectorAll(".btn-subtle-primary");
@@ -38,11 +38,13 @@ export async function api(method, path, options = {}) {
         method: method,
         headers: headers,
     };
-    if ((method === "GET" || method === "DELETE") && queryParams) {
-        console.log("QueryParams: ", queryParams);
-        path = queryParams
-            ? `${path}?${new URLSearchParams(queryParams).toString()}`
-            : path;
+    if (method === "GET" || method === "DELETE") {
+        if (queryParams) {
+            console.log("QueryParams: ", queryParams);
+            path = queryParams
+                ? `${path}?${new URLSearchParams(queryParams).toString()}`
+                : path;
+        }
     } else {
         if (body instanceof FormData) {
             console.log("Body: FormData object");
@@ -50,7 +52,7 @@ export async function api(method, path, options = {}) {
         } else {
             console.log(
                 "Body: ",
-                body ? JSON.stringify(body) : "EMPTY_BODY_PASSED"
+                body ? JSON.stringify(body) : "EMPTY_BODY_PASSED",
             );
             fetchOptions.body = body ? JSON.stringify(body) : "";
         }
@@ -62,6 +64,7 @@ export async function apiJson(method, path, options = {}) {
     const response = await api(method, path, options);
 
     let jsonResponse;
+    console.log("Response Headers: ", response.headers);
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.includes("application/json")) {
         jsonResponse = await response.json();
@@ -76,7 +79,8 @@ export async function apiJson(method, path, options = {}) {
 
     const failureResponse = {};
     if (response) {
-        if (response.ok) {
+        if (response.status && response.status.toString().startsWith("2")) {
+            console.log("Response Status:", response.status);
             console.log("Response: ", response);
             return jsonResponse;
         } else {
@@ -120,7 +124,7 @@ export function processQueryParams(queryParams) {
         .filter(([, value]) => !value)
         .map(
             ([key, value]) =>
-                `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+                `${encodeURIComponent(key)}=${encodeURIComponent(value)}`,
         )
         .join("&");
 }
