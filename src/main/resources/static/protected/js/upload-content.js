@@ -167,6 +167,7 @@ function clearContentForm(userConfirmed = false) {
                 carouselInner.innerHTML = "";
                 log(LOG_LEVELS.DEBUG, "Cleared image preview carousel");
             }
+            imagePreview.classList.add("d-none");
         }
         // Reset aria-checked
         const donationCheckbox = document.getElementById(
@@ -241,6 +242,14 @@ function displayImageNames() {
             carouselInner.appendChild(carouselItem);
         }
     });
+
+    if (imagePreview) {
+        if (input.files.length > 0) {
+            imagePreview.classList.remove("d-none");
+        } else {
+            imagePreview.classList.add("d-none");
+        }
+    }
 
     log(LOG_LEVELS.INFO, `Successfully processed ${input.files.length} images`);
 }
