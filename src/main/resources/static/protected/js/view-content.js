@@ -192,6 +192,7 @@ function mapToRow(val, idx) {
          <td>
             <a class="" href="#" data-bs-toggle="modal" data-bs-target="#viewContentModal" 
                 onclick="loadContentInModal(${idx})">view</a>
+            | <a class="text-danger" href="#" onclick="deleteContent(${idx}, '${val.id}')">delete</a>
          </td>
          <td>
             <a class="" href="#" data-bs-toggle="modal" data-bs-target="#viewImagesModal" 
@@ -597,3 +598,33 @@ function refreshImagesForCurrentContent(contentId) {
         }
     });
 }
+
+function deleteContent(idx, contentId) {
+    if (
+        !confirm(
+            "Are you sure you want to delete this content? This action cannot be undone.",
+        )
+    )
+        return;
+
+    api("DELETE", `/content/${contentId}`, {
+        method: "DELETE",
+    })
+        .then((res) => {
+            console.log("Delete content response: ", res);
+            if (res?.status?.toString().startsWith("2")) {
+                alert("Content deleted successfully!");
+                // Remove row from datatable
+                if (contentTableDTInstance) {
+                    contentTableDTInstance.row(idx).remove().draw(false);
+                }
+            } else {
+                alert("Failed to delete content.");
+            }
+        })
+        .catch((e) => {
+            console.error("Delete content error", e);
+            alert("Error while deleting content.");
+        });
+}
+window.deleteContent = deleteContent;
