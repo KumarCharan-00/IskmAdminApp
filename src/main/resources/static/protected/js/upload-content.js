@@ -49,6 +49,33 @@ window.addContent = addContent;
 document.addEventListener("DOMContentLoaded", () => {
     selectedType();
     dateRangePicker();
+
+    // Seva options listeners
+    const neverExpiryOption = document.getElementById("sevaNeverExpiryOption");
+
+    if (neverExpiryOption) {
+        neverExpiryOption.addEventListener("change", function () {
+            this.setAttribute("aria-checked", this.checked);
+            const dateContainer = document.getElementById("dateContainer");
+            if (dateContainer) {
+                if (this.checked) {
+                    dateContainer.classList.add("d-none");
+                    dateContainer
+                        .querySelectorAll("input, textarea")
+                        .forEach((i) => {
+                            i.disabled = true;
+                            i.value = "";
+                        });
+                } else {
+                    dateContainer.classList.remove("d-none");
+                    dateContainer
+                        .querySelectorAll("input, textarea")
+                        .forEach((i) => (i.disabled = false));
+                }
+            }
+        });
+    }
+
     // Initialize with default type
     updateFormFields("Festival");
 
@@ -89,6 +116,7 @@ function updateFormFields(type) {
         donation: document.getElementById("donationContainer"),
         quote: document.getElementById("quoteContainer"),
         preview: document.getElementById("previewContainer"),
+        sevaOptions: document.getElementById("sevaOptionsContainer"),
     };
 
     const toggle = (el, show) => {
@@ -96,12 +124,12 @@ function updateFormFields(type) {
         if (show) {
             el.classList.remove("d-none");
             el.querySelectorAll("input, textarea").forEach(
-                (i) => (i.disabled = false)
+                (i) => (i.disabled = false),
             );
         } else {
             el.classList.add("d-none");
             el.querySelectorAll("input, textarea").forEach(
-                (i) => (i.disabled = true)
+                (i) => (i.disabled = true),
             );
         }
     };
@@ -109,6 +137,7 @@ function updateFormFields(type) {
     const dateHelpText = document.getElementById("dateHelpText");
 
     if (type === "Festival") {
+        toggle(fields.sevaOptions, false);
         toggle(fields.location, true);
         toggle(fields.dates, true);
         toggle(fields.donation, true);
@@ -119,8 +148,14 @@ function updateFormFields(type) {
                 "These are the days this event is expected to start and stay valid until date. Once event starts even if it is in draft date it will be moved to published state and after end date it will be moved to expired state. For Festival User can see these dates";
         }
     } else if (type === "Seva") {
+        toggle(fields.sevaOptions, true);
         toggle(fields.location, false);
-        toggle(fields.dates, true);
+
+        const neverExpiry = document.getElementById("sevaNeverExpiryOption");
+        const neverExpiryChecked = neverExpiry ? neverExpiry.checked : false;
+
+        toggle(fields.dates, !neverExpiryChecked);
+
         toggle(fields.donation, true);
         toggle(fields.quote, true);
         toggle(fields.preview, true);
@@ -129,6 +164,7 @@ function updateFormFields(type) {
                 "This start date this event automatically moves to published state if it is in draft and after end date it moves to expired state. User Cannot see these dates";
         }
     } else if (type === "Blog") {
+        toggle(fields.sevaOptions, false);
         toggle(fields.location, false);
         toggle(fields.dates, false);
         toggle(fields.donation, true);
@@ -171,11 +207,21 @@ function clearContentForm(userConfirmed = false) {
         }
         // Reset aria-checked
         const donationCheckbox = document.getElementById(
-            "contentDonationOption"
+            "contentDonationOption",
         );
         if (donationCheckbox) {
             donationCheckbox.setAttribute("aria-checked", "false");
         }
+
+        // Reset Seva options aria-checked
+        const neverExpiry = document.getElementById("sevaNeverExpiryOption");
+        if (neverExpiry) neverExpiry.setAttribute("aria-checked", "false");
+
+        // Sync DOM states with reset toggles
+        const typeBtn = document.getElementById("typeDropdownBtn");
+        const type = typeBtn ? typeBtn.textContent.trim() : "Festival";
+        updateFormFields(type);
+
         log(LOG_LEVELS.INFO, "Form cleared successfully");
     } else {
         log(LOG_LEVELS.WARN, "Content upload form not found");
@@ -229,7 +275,7 @@ function displayImageNames() {
                 URL.revokeObjectURL(imageUrl);
                 log(
                     LOG_LEVELS.DEBUG,
-                    `Image loaded and URL revoked for: ${file.name}`
+                    `Image loaded and URL revoked for: ${file.name}`,
                 );
             };
             img.onerror = () => {
@@ -292,7 +338,7 @@ function saveContent(status) {
                 log(
                     LOG_LEVELS.INFO,
                     `${actionName} API response received`,
-                    response
+                    response,
                 );
                 if (response && !response.errorMessage) {
                     log(LOG_LEVELS.INFO, `${actionName} successful`);
@@ -302,7 +348,7 @@ function saveContent(status) {
                                 ? "saved as draft"
                                 : "saved and uploaded"
                         } successfully!`,
-                        "success"
+                        "success",
                     );
                     clearContentForm(true);
                 } else {
@@ -317,7 +363,7 @@ function saveContent(status) {
                 log(LOG_LEVELS.ERROR, `${actionName} API call failed`, error);
                 showAlert(
                     `Failed to save content. Please try again.`,
-                    "danger"
+                    "danger",
                 );
             });
     }, 1000); // 1 second lock to prevent double clicks
@@ -430,15 +476,28 @@ function validateFormData(formData) {
     }
 
     if (type === "Festival" || type === "Seva") {
-        if (!formData.get("showFromDate")) {
-            log(LOG_LEVELS.WARN, "Validation failed: Missing start date");
-            showAlert("Please select a Start Date.", "danger");
-            return false;
-        }
-        if (!formData.get("showToDate")) {
-            log(LOG_LEVELS.WARN, "Validation failed: Missing end date");
-            showAlert("Please select an End Date.", "danger");
-            return false;
+        const datesShown = !document
+            .getElementById("dateContainer")
+            .classList.contains("d-none");
+
+        if (datesShown) {
+            if (!formData.get("showFromDate")) {
+                log(LOG_LEVELS.WARN, "Validation failed: Missing start date");
+                showAlert("Please select a Start Date.", "danger");
+                return false;
+            }
+
+            const neverExpiryOption = document.getElementById(
+                "sevaNeverExpiryOption",
+            );
+            const neverExpiryChecked =
+                neverExpiryOption && neverExpiryOption.checked;
+
+            if (!neverExpiryChecked && !formData.get("showToDate")) {
+                log(LOG_LEVELS.WARN, "Validation failed: Missing end date");
+                showAlert("Please select an End Date.", "danger");
+                return false;
+            }
         }
     }
 
