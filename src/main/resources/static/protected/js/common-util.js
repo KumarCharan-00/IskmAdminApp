@@ -49,6 +49,10 @@ export async function api(method, path, options = {}) {
         if (body instanceof FormData) {
             console.log("Body: FormData object");
             fetchOptions.body = body;
+            // IMPORTANT: Let the browser set the Content-Type automatically for FormData to include the boundary
+            if (fetchOptions.headers && fetchOptions.headers["Content-Type"]) {
+                delete fetchOptions.headers["Content-Type"];
+            }
         } else {
             console.log(
                 "Body: ",
