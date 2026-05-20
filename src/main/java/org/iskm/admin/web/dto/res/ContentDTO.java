@@ -8,6 +8,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import org.iskm.admin.web.model.entity.Seva;
+import org.iskm.admin.web.model.entity.SevaSubType;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -26,6 +29,8 @@ public class ContentDTO extends ErrorDTO {
     private LocalDate showToDate;
     private LocalDateTime createdAt;
     private List<ImageDTO> images;
+    private Seva seva;
+    private SevaSubType sevaSubType;
 
     @Data
     @AllArgsConstructor

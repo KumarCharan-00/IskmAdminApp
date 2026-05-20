@@ -21,4 +21,6 @@ public class ContentUpdateRequest {
     private Boolean showDonation;
     private LocalDate showFromDate;
     private LocalDate showToDate;
+    private String sevaId;
+    private String sevaSubTypeId;
 }

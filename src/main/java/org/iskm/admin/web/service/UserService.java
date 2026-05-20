@@ -232,6 +232,8 @@ public class UserService {
         dto.setLocation(content.getLocation());
         dto.setCreatedAt(content.getCreatedAt());
         dto.setImages(mapImages(content.getImages()));
+        dto.setSeva(content.getSeva());
+        dto.setSevaSubType(content.getSevaSubType());
         return dto;
     }
 
@@ -320,6 +322,12 @@ public class UserService {
         }
         if (request.getShowDonation() != null) {
             content.setShowDonation(request.getShowDonation());
+        }
+        if (request.getSevaId() != null && !request.getSevaId().isBlank()) {
+            content.setSeva(sevaRepository.findById(request.getSevaId()).orElse(null));
+        }
+        if (request.getSevaSubTypeId() != null && !request.getSevaSubTypeId().isBlank()) {
+            content.setSevaSubType(sevaSubTypeRepository.findById(request.getSevaSubTypeId()).orElse(null));
         }
     }
 
