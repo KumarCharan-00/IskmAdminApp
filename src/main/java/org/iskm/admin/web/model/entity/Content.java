@@ -12,6 +12,8 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -67,6 +69,14 @@ public class Content {
     @ToString.Exclude
     @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images = new ArrayList<>();
+
+    @ManyToOne
+    @JoinColumn(name = "seva_id")
+    private Seva seva;
+
+    @ManyToOne
+    @JoinColumn(name = "seva_sub_type_id")
+    private SevaSubType sevaSubType;
 
     @Override
     public final boolean equals(Object o) {

@@ -132,6 +132,34 @@
                         </div>
                     </div>
                     <div class="d-none mb-3" id="sevaOptionsContainer">
+                        <div class="row g-2 mb-3">
+                            <div class="col-md">
+                                <label for="sevaSelect" class="form-label">Seva</label>
+                                <select class="form-select" id="sevaSelect">
+                                    <option value="" selected disabled>Select Seva</option>
+                                    <option value="new">+ Add New Seva</option>
+                                </select>
+                                <input type="text" class="form-control mt-2 d-none" id="newSevaName" placeholder="Enter new Seva name" />
+                            </div>
+                            <div class="col-md">
+                                <label for="sevaSubTypeSelect" class="form-label">Sub Type</label>
+                                <select class="form-select" id="sevaSubTypeSelect" disabled>
+                                    <option value="" selected disabled>Select Sub Type</option>
+                                    <option value="new">+ Add New Sub Type</option>
+                                </select>
+                                <div id="newSubTypeContainer" class="d-none mt-2">
+                                    <input type="text" class="form-control mb-2" id="newSubTypeName" placeholder="Enter new Sub Type name" />
+                                    <div class="input-group mb-2" id="newSubTypeAmountContainer">
+                                        <span class="input-group-text">₹</span>
+                                        <input type="number" class="form-control" id="newSubTypeAmount" placeholder="Amount" />
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="newSubTypeGeneralDonation" />
+                                        <label class="form-check-label" for="newSubTypeGeneralDonation">General Donation (Any Amount)</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="form-check form-switch mb-2">
                             <input
                                 class="form-check-input"

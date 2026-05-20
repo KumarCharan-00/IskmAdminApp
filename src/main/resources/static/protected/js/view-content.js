@@ -180,6 +180,8 @@ const contentModal = {
     quote: "",
     type: "",
     showDonation: false,
+    sevaId: "",
+    sevaSubTypeId: "",
 };
 
 function mapToRow(val, idx) {
@@ -248,6 +250,41 @@ function loadContentInModal(idx) {
             bodyContainer.appendChild(locationDiv);
         }
 
+        if (val.type.toUpperCase() === "SEVA") {
+            let sevaDiv = document.createElement("div");
+            sevaDiv.className = "row g-2 mb-3";
+            sevaDiv.innerHTML = `
+                <div class="col-md">
+                    <label class="form-label fw-bold">Seva</label>
+                    <select class="form-select" id="viewContentModalSevaSelect" disabled>
+                        <option value="" selected disabled>--EMPTY--</option>
+                    </select>
+                    <input type="text" class="form-control mt-2 d-none" id="viewContentModalNewSevaName" placeholder="Enter new Seva name" disabled />
+                </div>
+                <div class="col-md">
+                    <label class="form-label fw-bold">Sub Type</label>
+                    <select class="form-select" id="viewContentModalSevaSubTypeSelect" disabled>
+                        <option value="" selected disabled>--EMPTY--</option>
+                    </select>
+                    <div id="viewContentModalNewSubTypeContainer" class="d-none mt-2">
+                        <input type="text" class="form-control mb-2" id="viewContentModalNewSubTypeName" placeholder="Enter new Sub Type name" disabled />
+                        <div class="input-group mb-2">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" class="form-control" id="viewContentModalNewSubTypeAmount" placeholder="Amount" disabled />
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="viewContentModalNewSubTypeGeneralDonation" disabled />
+                            <label class="form-check-label">General Donation (Any Amount)</label>
+                        </div>
+                    </div>
+                </div>
+            `;
+            bodyContainer.appendChild(sevaDiv);
+            
+            fetchSevasForViewModal(val.seva?.id, val.sevaSubType?.id);
+            setupSevaViewModalListeners();
+        }
+
         if (
             val.type.toUpperCase() === "FESTIVAL" ||
             val.type.toUpperCase() === "SEVA"
@@ -308,10 +345,96 @@ function loadContentInModal(idx) {
     contentModal.quote = val.quote || "";
     contentModal.type = val.type;
     contentModal.showDonation = val.showDonation || false;
+    contentModal.sevaId = val.seva?.id || "";
+    contentModal.sevaSubTypeId = val.sevaSubType?.id || "";
 
     console.log("contentModal", contentModal);
 }
 window.loadContentInModal = loadContentInModal;
+
+function fetchSevasForViewModal(selectedSevaId, selectedSubTypeId) {
+    apiJson("GET", "/api/sevas").then(response => {
+        const select = document.getElementById("viewContentModalSevaSelect");
+        if (select && response && !response.errorMessage && Array.isArray(response)) {
+            let html = '<option value="" disabled ' + (!selectedSevaId ? 'selected' : '') + '>--EMPTY--</option>';
+            response.forEach(seva => {
+                const isSelected = seva.id === selectedSevaId ? "selected" : "";
+                html += `<option value="${seva.id}" ${isSelected}>${seva.name}</option>`;
+            });
+            html += '<option value="new">+ Add New Seva</option>';
+            select.innerHTML = html;
+            
+            if (selectedSevaId && selectedSevaId !== "new") {
+                fetchSubTypesForViewModal(selectedSevaId, selectedSubTypeId);
+            }
+        }
+    });
+}
+
+function fetchSubTypesForViewModal(sevaId, selectedSubTypeId) {
+    apiJson("GET", `/api/sevas/${sevaId}/subtypes`).then(response => {
+        const select = document.getElementById("viewContentModalSevaSubTypeSelect");
+        if (select && response && !response.errorMessage && Array.isArray(response)) {
+            let html = '<option value="" disabled ' + (!selectedSubTypeId ? 'selected' : '') + '>--EMPTY--</option>';
+            response.forEach(st => {
+                const isSelected = st.id === selectedSubTypeId ? "selected" : "";
+                const amountText = st.isGeneralDonation ? "(General)" : `(₹${st.amount})`;
+                html += `<option value="${st.id}" ${isSelected}>${st.name} ${amountText}</option>`;
+            });
+            html += '<option value="new">+ Add New Sub Type</option>';
+            select.innerHTML = html;
+        }
+    });
+}
+
+function setupSevaViewModalListeners() {
+    const sevaSelect = document.getElementById("viewContentModalSevaSelect");
+    const subTypeSelect = document.getElementById("viewContentModalSevaSubTypeSelect");
+    const newSevaName = document.getElementById("viewContentModalNewSevaName");
+    const newSubTypeContainer = document.getElementById("viewContentModalNewSubTypeContainer");
+    const generalDonationCheck = document.getElementById("viewContentModalNewSubTypeGeneralDonation");
+    const amountInput = document.getElementById("viewContentModalNewSubTypeAmount");
+
+    if (!sevaSelect) return;
+
+    sevaSelect.addEventListener("change", function() {
+        if (this.value === "new") {
+            newSevaName.classList.remove("d-none");
+            subTypeSelect.disabled = true;
+            subTypeSelect.innerHTML = '<option value="new" selected>+ Add New Sub Type</option>';
+            newSubTypeContainer.classList.remove("d-none");
+        } else {
+            newSevaName.classList.add("d-none");
+            if (editMode) subTypeSelect.disabled = false;
+            fetchSubTypesForViewModal(this.value, "");
+            newSubTypeContainer.classList.add("d-none");
+        }
+        contentModifiedListener();
+    });
+
+    subTypeSelect.addEventListener("change", function() {
+        if (this.value === "new") {
+            newSubTypeContainer.classList.remove("d-none");
+        } else {
+            newSubTypeContainer.classList.add("d-none");
+        }
+        contentModifiedListener();
+    });
+
+    generalDonationCheck.addEventListener("change", function() {
+        if (this.checked) {
+            amountInput.parentElement.classList.add("d-none");
+            amountInput.value = "";
+        } else {
+            amountInput.parentElement.classList.remove("d-none");
+        }
+        contentModifiedListener();
+    });
+    
+    newSevaName.addEventListener("input", contentModifiedListener);
+    document.getElementById("viewContentModalNewSubTypeName").addEventListener("input", contentModifiedListener);
+    amountInput.addEventListener("input", contentModifiedListener);
+}
 
 let saveBtnEnabled = false;
 
@@ -358,12 +481,21 @@ let editMode = false;
 
 function switchContentMode() {
     const disableableElements = document.querySelectorAll(
-        "#viewContentModalDynamicBody textarea, #viewContentModalDynamicBody input",
+        "#viewContentModalDynamicBody textarea, #viewContentModalDynamicBody input, #viewContentModalDynamicBody select",
     );
     const contentBodyEditMode = document.querySelector(".modalStateBtn");
     if (disableableElements.length > 0 && contentBodyEditMode) {
         let isDisabled = disableableElements[0].disabled;
         disableableElements.forEach((el) => (el.disabled = !isDisabled));
+
+        // Enforce Seva logic rules when enabling
+        if (isDisabled) { // meaning we are switching TO edit mode
+            const sevaSelect = document.getElementById("viewContentModalSevaSelect");
+            const subTypeSelect = document.getElementById("viewContentModalSevaSubTypeSelect");
+            if (sevaSelect && sevaSelect.value === "new") {
+                if (subTypeSelect) subTypeSelect.disabled = true;
+            }
+        }
 
         contentBodyEditMode.textContent = isDisabled ? "Read-Only" : "Edit";
 
@@ -422,7 +554,7 @@ function closeContentModal() {
 }
 window.closeContentModal = closeContentModal;
 
-function saveContentById(idx, contentId) {
+async function saveContentById(idx, contentId) {
     const titleNode = document.getElementById("viewContentModalLabel");
     const previewArea = document.getElementById("viewContentModalPreview");
     const fullTextArea = document.getElementById("viewContentModalFullText");
@@ -432,6 +564,68 @@ function saveContentById(idx, contentId) {
     );
 
     let body = {};
+    
+    let finalSevaId = contentModal.sevaId;
+    let finalSubTypeId = contentModal.sevaSubTypeId;
+
+    if (contentModal.type.toUpperCase() === "SEVA") {
+        const sevaSelect = document.getElementById("viewContentModalSevaSelect");
+        const subTypeSelect = document.getElementById("viewContentModalSevaSubTypeSelect");
+        
+        if (sevaSelect && sevaSelect.value) {
+            if (sevaSelect.value === "new") {
+                const newName = document.getElementById("viewContentModalNewSevaName").value.trim();
+                if (!newName) {
+                    alert("Please enter a name for the new Seva.");
+                    return;
+                }
+                const sevaRes = await apiJson("POST", "/api/sevas", { body: { name: newName } });
+                if (sevaRes && sevaRes.errorMessage) {
+                    alert("Failed to create Seva: " + sevaRes.errorMessage);
+                    return;
+                }
+                finalSevaId = sevaRes.id;
+            } else {
+                finalSevaId = sevaSelect.value;
+            }
+
+            if (subTypeSelect.value === "new" || sevaSelect.value === "new") {
+                const newSubName = document.getElementById("viewContentModalNewSubTypeName").value.trim();
+                if (!newSubName) {
+                    alert("Please enter a name for the new Sub Type.");
+                    return;
+                }
+                const isGen = document.getElementById("viewContentModalNewSubTypeGeneralDonation").checked;
+                const amt = document.getElementById("viewContentModalNewSubTypeAmount").value;
+                if (!isGen && !amt) {
+                    alert("Please enter an amount or select General Donation.");
+                    return;
+                }
+                const subRes = await apiJson("POST", `/api/sevas/${finalSevaId}/subtypes`, {
+                    body: {
+                        name: newSubName,
+                        amount: isGen ? null : parseFloat(amt),
+                        isGeneralDonation: isGen
+                    }
+                });
+                if (subRes && subRes.errorMessage) {
+                    alert("Failed to create Sub Type: " + subRes.errorMessage);
+                    return;
+                }
+                finalSubTypeId = subRes.id;
+            } else {
+                if (!subTypeSelect.value) {
+                    alert("Please select a Sub Type.");
+                    return;
+                }
+                finalSubTypeId = subTypeSelect.value;
+            }
+        } else if (sevaSelect && !sevaSelect.value) {
+            alert("Please select a valid Seva and Sub Type.");
+            return;
+        }
+    }
+
     if (titleNode && contentModal.title !== titleNode.textContent) {
         body.title = titleNode.textContent;
     }
@@ -450,6 +644,14 @@ function saveContentById(idx, contentId) {
     ) {
         body.showDonation = donationSwitch.checked;
     }
+    
+    if (finalSevaId !== contentModal.sevaId) body.sevaId = finalSevaId;
+    if (finalSubTypeId !== contentModal.sevaSubTypeId) body.sevaSubTypeId = finalSubTypeId;
+
+    if (Object.keys(body).length === 0) {
+        // No actual changes to save
+        return;
+    }
 
     const response = apiJson("PATCH", `/content/${contentId}`, { body });
     response.then((json) => popup(idx, json));
@@ -466,6 +668,8 @@ function popup(idx, json) {
         contentModal.title = json.title;
         if (json.showDonation !== undefined)
             contentModal.showDonation = json.showDonation;
+        if (json.seva) contentModal.sevaId = json.seva.id;
+        if (json.sevaSubType) contentModal.sevaSubTypeId = json.sevaSubType.id;
 
         loadedContentData[idx] = Object.assign(
             {},

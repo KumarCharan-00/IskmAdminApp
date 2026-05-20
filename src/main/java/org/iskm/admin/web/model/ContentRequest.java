@@ -24,4 +24,6 @@ public class ContentRequest {
     private String status;
     private LocalDate showFromDate;
     private LocalDate showToDate;
+    private String sevaId;
+    private String sevaSubTypeId;
 }

@@ -46,14 +46,20 @@ public class UserService {
     private final ContentRepository contentRepository;
     private final UserRepository userRepository;
     private final ImageRepository imageRepository;
+    private final org.iskm.admin.web.repository.SevaRepository sevaRepository;
+    private final org.iskm.admin.web.repository.SevaSubTypeRepository sevaSubTypeRepository;
 
     public UserService(UserRepo repo, CommonUtil commonUtil, ContentRepository contentRepository,
-            UserRepository userRepository, ImageRepository imageRepository) {
+            UserRepository userRepository, ImageRepository imageRepository,
+            org.iskm.admin.web.repository.SevaRepository sevaRepository,
+            org.iskm.admin.web.repository.SevaSubTypeRepository sevaSubTypeRepository) {
         this.repo = repo;
         this.commonUtil = commonUtil;
         this.contentRepository = contentRepository;
         this.userRepository = userRepository;
         this.imageRepository = imageRepository;
+        this.sevaRepository = sevaRepository;
+        this.sevaSubTypeRepository = sevaSubTypeRepository;
     }
 
     public Response saveUser(@NonNull AddUserDTO addUserDTO) {
@@ -105,8 +111,18 @@ public class UserService {
                 request.getShowFromDate(),
                 request.getShowToDate(),
                 LocalDateTime.now(),
-                imageList
+                imageList,
+                null,
+                null
         );
+
+        if (request.getSevaId() != null && !request.getSevaId().isBlank()) {
+            content.setSeva(sevaRepository.findById(request.getSevaId()).orElse(null));
+        }
+        if (request.getSevaSubTypeId() != null && !request.getSevaSubTypeId().isBlank()) {
+            content.setSevaSubType(sevaSubTypeRepository.findById(request.getSevaSubTypeId()).orElse(null));
+        }
+
         log.info("Content Request: {}", request);
         if (request.getImages() != null
                 && !request.getImages().isEmpty()) {

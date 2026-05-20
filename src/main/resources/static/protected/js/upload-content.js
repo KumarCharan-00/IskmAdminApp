@@ -86,7 +86,87 @@ document.addEventListener("DOMContentLoaded", () => {
             this.setAttribute("aria-checked", this.checked);
         });
     }
+
+    // Seva UI logic
+    initSevaUI();
 });
+
+function initSevaUI() {
+    const sevaSelect = document.getElementById("sevaSelect");
+    const newSevaName = document.getElementById("newSevaName");
+    const subTypeSelect = document.getElementById("sevaSubTypeSelect");
+    const newSubTypeContainer = document.getElementById("newSubTypeContainer");
+    const generalDonationCheck = document.getElementById("newSubTypeGeneralDonation");
+    const amountContainer = document.getElementById("newSubTypeAmountContainer");
+    const amountInput = document.getElementById("newSubTypeAmount");
+
+    if (!sevaSelect) return;
+
+    // Load initial sevas
+    fetchSevas();
+
+    sevaSelect.addEventListener("change", function() {
+        if (this.value === "new") {
+            newSevaName.classList.remove("d-none");
+            subTypeSelect.disabled = true;
+            subTypeSelect.innerHTML = '<option value="new" selected>+ Add New Sub Type</option>';
+            newSubTypeContainer.classList.remove("d-none");
+        } else {
+            newSevaName.classList.add("d-none");
+            subTypeSelect.disabled = false;
+            fetchSubTypes(this.value);
+            newSubTypeContainer.classList.add("d-none");
+        }
+    });
+
+    subTypeSelect.addEventListener("change", function() {
+        if (this.value === "new") {
+            newSubTypeContainer.classList.remove("d-none");
+        } else {
+            newSubTypeContainer.classList.add("d-none");
+        }
+    });
+
+    generalDonationCheck.addEventListener("change", function() {
+        if (this.checked) {
+            amountContainer.classList.add("d-none");
+            amountInput.value = "";
+        } else {
+            amountContainer.classList.remove("d-none");
+        }
+    });
+}
+
+function fetchSevas() {
+    apiJson("GET", "/api/sevas").then(response => {
+        const select = document.getElementById("sevaSelect");
+        if (select) {
+            select.innerHTML = '<option value="" selected disabled>Select Seva</option>';
+            if (response && !response.errorMessage && Array.isArray(response)) {
+                response.forEach(seva => {
+                    select.innerHTML += `<option value="${seva.id}">${seva.name}</option>`;
+                });
+            }
+            select.innerHTML += '<option value="new">+ Add New Seva</option>';
+        }
+    }).catch(e => log(LOG_LEVELS.ERROR, "Failed to fetch sevas", e));
+}
+
+function fetchSubTypes(sevaId) {
+    apiJson("GET", `/api/sevas/${sevaId}/subtypes`).then(response => {
+        const select = document.getElementById("sevaSubTypeSelect");
+        if (select) {
+            select.innerHTML = '<option value="" selected disabled>Select Sub Type</option>';
+            if (response && !response.errorMessage && Array.isArray(response)) {
+                response.forEach(st => {
+                    const amountText = st.isGeneralDonation ? "(General)" : `(₹${st.amount})`;
+                    select.innerHTML += `<option value="${st.id}">${st.name} ${amountText}</option>`;
+                });
+            }
+            select.innerHTML += '<option value="new">+ Add New Sub Type</option>';
+        }
+    }).catch(e => log(LOG_LEVELS.ERROR, "Failed to fetch sub types", e));
+}
 
 function selectedType() {
     const typeList = document.querySelector(".type-options");
@@ -123,12 +203,12 @@ function updateFormFields(type) {
         if (!el) return;
         if (show) {
             el.classList.remove("d-none");
-            el.querySelectorAll("input, textarea").forEach(
+            el.querySelectorAll("input, textarea, select").forEach(
                 (i) => (i.disabled = false),
             );
         } else {
             el.classList.add("d-none");
-            el.querySelectorAll("input, textarea").forEach(
+            el.querySelectorAll("input, textarea, select").forEach(
                 (i) => (i.disabled = true),
             );
         }
@@ -217,6 +297,22 @@ function clearContentForm(userConfirmed = false) {
         const neverExpiry = document.getElementById("sevaNeverExpiryOption");
         if (neverExpiry) neverExpiry.setAttribute("aria-checked", "false");
 
+        // Reset Seva Options UI
+        const sevaSelect = document.getElementById("sevaSelect");
+        if (sevaSelect) {
+            sevaSelect.value = "";
+            document.getElementById("newSevaName").classList.add("d-none");
+            document.getElementById("newSevaName").value = "";
+            const subTypeSelect = document.getElementById("sevaSubTypeSelect");
+            subTypeSelect.innerHTML = '<option value="" selected disabled>Select Sub Type</option><option value="new">+ Add New Sub Type</option>';
+            subTypeSelect.disabled = true;
+            document.getElementById("newSubTypeContainer").classList.add("d-none");
+            document.getElementById("newSubTypeName").value = "";
+            document.getElementById("newSubTypeAmount").value = "";
+            document.getElementById("newSubTypeGeneralDonation").checked = false;
+            document.getElementById("newSubTypeAmountContainer").classList.remove("d-none");
+        }
+
         // Sync DOM states with reset toggles
         const typeBtn = document.getElementById("typeDropdownBtn");
         const type = typeBtn ? typeBtn.textContent.trim() : "Festival";
@@ -302,16 +398,90 @@ function displayImageNames() {
 
 // Save as Draft function with lock handler
 // Generic save function
-function saveContent(status) {
+async function saveContent(status) {
     const actionName = status === "draft" ? "Save as Draft" : "Save and Upload";
     log(LOG_LEVELS.INFO, `${actionName} function called`);
 
-    const saveHandler = createLockHandler(() => {
+    const saveHandler = createLockHandler(async () => {
         log(LOG_LEVELS.INFO, `${actionName} clicked - starting process`);
+
+        // Handle Seva / SubType creation first if applicable
+        const typeBtn = document.getElementById("typeDropdownBtn");
+        const type = typeBtn ? typeBtn.textContent.trim() : "Festival";
+        
+        let finalSevaId = "";
+        let finalSubTypeId = "";
+
+        if (type === "Seva") {
+            const sevaSelect = document.getElementById("sevaSelect");
+            const subTypeSelect = document.getElementById("sevaSubTypeSelect");
+            
+            if (!sevaSelect || !sevaSelect.value) {
+                showAlert("Please select or create a Seva.", "danger");
+                return;
+            }
+
+            if (sevaSelect.value === "new") {
+                const newName = document.getElementById("newSevaName").value.trim();
+                if (!newName) {
+                    showAlert("Please enter a name for the new Seva.", "danger");
+                    return;
+                }
+                try {
+                    const sevaRes = await apiJson("POST", "/api/sevas", { body: { name: newName } });
+                    if (sevaRes && sevaRes.errorMessage) throw new Error(sevaRes.errorMessage);
+                    finalSevaId = sevaRes.id;
+                } catch (e) {
+                    showAlert("Failed to create new Seva.", "danger");
+                    return;
+                }
+            } else {
+                finalSevaId = sevaSelect.value;
+            }
+
+            if (subTypeSelect.value === "new" || sevaSelect.value === "new") {
+                const newSubName = document.getElementById("newSubTypeName").value.trim();
+                if (!newSubName) {
+                    showAlert("Please enter a name for the new Sub Type.", "danger");
+                    return;
+                }
+                const isGen = document.getElementById("newSubTypeGeneralDonation").checked;
+                const amt = document.getElementById("newSubTypeAmount").value;
+                if (!isGen && !amt) {
+                    showAlert("Please enter an amount or select General Donation.", "danger");
+                    return;
+                }
+                try {
+                    const subRes = await apiJson("POST", `/api/sevas/${finalSevaId}/subtypes`, {
+                        body: {
+                            name: newSubName,
+                            amount: isGen ? null : parseFloat(amt),
+                            isGeneralDonation: isGen
+                        }
+                    });
+                    if (subRes && subRes.errorMessage) throw new Error(subRes.errorMessage);
+                    finalSubTypeId = subRes.id;
+                } catch (e) {
+                    showAlert("Failed to create new Sub Type.", "danger");
+                    return;
+                }
+            } else {
+                if (!subTypeSelect.value) {
+                    showAlert("Please select or create a Sub Type.", "danger");
+                    return;
+                }
+                finalSubTypeId = subTypeSelect.value;
+            }
+        }
 
         // Validate form data before sending
         log(LOG_LEVELS.DEBUG, `Collecting form data for ${status}`);
         const formData = collectFormData();
+
+        if (type === "Seva") {
+            formData.append("sevaId", finalSevaId);
+            formData.append("sevaSubTypeId", finalSubTypeId);
+        }
 
         if (!validateFormData(formData)) {
             log(LOG_LEVELS.WARN, `Form validation failed for ${status}`);
@@ -351,6 +521,9 @@ function saveContent(status) {
                         "success",
                     );
                     clearContentForm(true);
+                    if (type === "Seva") {
+                        fetchSevas(); // Refresh sevas dropdown
+                    }
                 } else {
                     const errorMsg = response?.errorMessage || "Unknown error";
                     log(LOG_LEVELS.ERROR, `${actionName} failed`, {
