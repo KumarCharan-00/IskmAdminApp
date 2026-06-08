@@ -250,7 +250,7 @@ function loadContentInModal(idx) {
             bodyContainer.appendChild(locationDiv);
         }
 
-        if (val.type.toUpperCase() === "SEVA") {
+        if (val.type.toUpperCase() === "SEVA" || val.type.toUpperCase() === "ACTIVITY") {
             let sevaDiv = document.createElement("div");
             sevaDiv.className = "row g-2 mb-3";
             sevaDiv.innerHTML = `
@@ -287,7 +287,8 @@ function loadContentInModal(idx) {
 
         if (
             val.type.toUpperCase() === "FESTIVAL" ||
-            val.type.toUpperCase() === "SEVA"
+            val.type.toUpperCase() === "SEVA" ||
+            val.type.toUpperCase() === "ACTIVITY"
         ) {
             let datesDiv = document.createElement("div");
             datesDiv.className = "d-flex flex-row gap-2";
@@ -568,7 +569,7 @@ async function saveContentById(idx, contentId) {
     let finalSevaId = contentModal.sevaId;
     let finalSubTypeId = contentModal.sevaSubTypeId;
 
-    if (contentModal.type.toUpperCase() === "SEVA") {
+    if (contentModal.type.toUpperCase() === "SEVA" || contentModal.type.toUpperCase() === "ACTIVITY") {
         const sevaSelect = document.getElementById("viewContentModalSevaSelect");
         const subTypeSelect = document.getElementById("viewContentModalSevaSubTypeSelect");
         

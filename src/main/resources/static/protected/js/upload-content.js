@@ -227,7 +227,7 @@ function updateFormFields(type) {
             dateHelpText.textContent =
                 "These are the days this event is expected to start and stay valid until date. Once event starts even if it is in draft date it will be moved to published state and after end date it will be moved to expired state. For Festival User can see these dates";
         }
-    } else if (type === "Seva") {
+    } else if (type === "Seva" || type === "Activity") {
         toggle(fields.sevaOptions, true);
         toggle(fields.location, false);
 
@@ -412,7 +412,7 @@ async function saveContent(status) {
         let finalSevaId = "";
         let finalSubTypeId = "";
 
-        if (type === "Seva") {
+        if (type === "Seva" || type === "Activity") {
             const sevaSelect = document.getElementById("sevaSelect");
             const subTypeSelect = document.getElementById("sevaSubTypeSelect");
             
@@ -478,7 +478,7 @@ async function saveContent(status) {
         log(LOG_LEVELS.DEBUG, `Collecting form data for ${status}`);
         const formData = collectFormData();
 
-        if (type === "Seva") {
+        if (type === "Seva" || type === "Activity") {
             formData.append("sevaId", finalSevaId);
             formData.append("sevaSubTypeId", finalSubTypeId);
         }
@@ -521,7 +521,7 @@ async function saveContent(status) {
                         "success",
                     );
                     clearContentForm(true);
-                    if (type === "Seva") {
+                    if (type === "Seva" || type === "Activity") {
                         fetchSevas(); // Refresh sevas dropdown
                     }
                 } else {
@@ -648,7 +648,7 @@ function validateFormData(formData) {
         return false;
     }
 
-    if (type === "Festival" || type === "Seva") {
+    if (type === "Festival" || type === "Seva" || type === "Activity") {
         const datesShown = !document
             .getElementById("dateContainer")
             .classList.contains("d-none");
