@@ -113,7 +113,9 @@ public class UserService {
                 LocalDateTime.now(),
                 imageList,
                 null,
-                null
+                null,
+                request.getButtonText(),
+                request.getButtonHref()
         );
 
         if (request.getSevaId() != null && !request.getSevaId().isBlank()) {
@@ -234,6 +236,8 @@ public class UserService {
         dto.setImages(mapImages(content.getImages()));
         dto.setSeva(content.getSeva());
         dto.setSevaSubType(content.getSevaSubType());
+        dto.setButtonText(content.getButtonText());
+        dto.setButtonHref(content.getButtonHref());
         return dto;
     }
 
@@ -313,6 +317,8 @@ public class UserService {
         updateStringField(content::setFullText, request.getFullText());
         updateStringField(content::setStatus, request.getStatus());
         updateStringField(content::setLocation, request.getLocation());
+        updateStringField(content::setButtonText, request.getButtonText());
+        updateStringField(content::setButtonHref, request.getButtonHref());
 
         if (request.getShowFromDate() != null) {
             content.setShowFromDate(request.getShowFromDate());
@@ -332,7 +338,7 @@ public class UserService {
     }
 
     private void updateStringField(Consumer<String> setter, String value) {
-        if (value != null && !value.isBlank()) {
+        if (value != null) {
             setter.accept(value);
         }
     }

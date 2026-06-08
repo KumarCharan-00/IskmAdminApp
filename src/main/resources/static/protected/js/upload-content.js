@@ -197,6 +197,7 @@ function updateFormFields(type) {
         quote: document.getElementById("quoteContainer"),
         preview: document.getElementById("previewContainer"),
         sevaOptions: document.getElementById("sevaOptionsContainer"),
+        carouselFields: document.getElementById("carouselFieldsContainer"),
     };
 
     const toggle = (el, show) => {
@@ -223,6 +224,7 @@ function updateFormFields(type) {
         toggle(fields.donation, true);
         toggle(fields.quote, true);
         toggle(fields.preview, true);
+        toggle(fields.carouselFields, false);
         if (dateHelpText) {
             dateHelpText.textContent =
                 "These are the days this event is expected to start and stay valid until date. Once event starts even if it is in draft date it will be moved to published state and after end date it will be moved to expired state. For Festival User can see these dates";
@@ -230,6 +232,7 @@ function updateFormFields(type) {
     } else if (type === "Seva" || type === "Activity") {
         toggle(fields.sevaOptions, true);
         toggle(fields.location, false);
+        toggle(fields.carouselFields, false);
 
         const neverExpiry = document.getElementById("sevaNeverExpiryOption");
         const neverExpiryChecked = neverExpiry ? neverExpiry.checked : false;
@@ -250,6 +253,18 @@ function updateFormFields(type) {
         toggle(fields.donation, true);
         toggle(fields.quote, true);
         toggle(fields.preview, true);
+        toggle(fields.carouselFields, false);
+        if (dateHelpText) {
+            dateHelpText.textContent = "";
+        }
+    } else if (type === "Carousel") {
+        toggle(fields.sevaOptions, false);
+        toggle(fields.location, false);
+        toggle(fields.dates, false);
+        toggle(fields.donation, false);
+        toggle(fields.quote, false);
+        toggle(fields.preview, false);
+        toggle(fields.carouselFields, true);
         if (dateHelpText) {
             dateHelpText.textContent = "";
         }
@@ -312,6 +327,12 @@ function clearContentForm(userConfirmed = false) {
             document.getElementById("newSubTypeGeneralDonation").checked = false;
             document.getElementById("newSubTypeAmountContainer").classList.remove("d-none");
         }
+
+        // Reset Carousel fields
+        const buttonText = document.getElementById("contentButtonText");
+        if (buttonText) buttonText.value = "";
+        const buttonHref = document.getElementById("contentButtonHref");
+        if (buttonHref) buttonHref.value = "";
 
         // Sync DOM states with reset toggles
         const typeBtn = document.getElementById("typeDropdownBtn");
@@ -622,6 +643,16 @@ function collectFormData() {
     const preview = document.getElementById("contentPreview");
     if (preview && !preview.disabled && preview.value.trim()) {
         formData.append("shortText", preview.value.trim());
+    }
+
+    // Get Button Text / Href (if enabled)
+    const buttonText = document.getElementById("contentButtonText");
+    const buttonHref = document.getElementById("contentButtonHref");
+    if (buttonText && !buttonText.disabled && buttonText.value.trim()) {
+        formData.append("buttonText", buttonText.value.trim());
+    }
+    if (buttonHref && !buttonHref.disabled && buttonHref.value.trim()) {
+        formData.append("buttonHref", buttonHref.value.trim());
     }
 
     log(LOG_LEVELS.DEBUG, "Form data collection completed");

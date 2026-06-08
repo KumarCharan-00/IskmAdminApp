@@ -182,6 +182,8 @@ const contentModal = {
     showDonation: false,
     sevaId: "",
     sevaSubTypeId: "",
+    buttonText: "",
+    buttonHref: "",
 };
 
 function mapToRow(val, idx) {
@@ -308,19 +310,37 @@ function loadContentInModal(idx) {
             dateRangePicker();
         }
 
-        let previewDiv = document.createElement("div");
-        previewDiv.innerHTML = `
-                <label for="viewContentModalPreview" class="form-label fw-bold">Short Text (Preview)</label>
-                <textarea class="modal-body form-control" id="viewContentModalPreview" style="height: 4rem" disabled>${val.previewText || ""}</textarea>
+        if (val.type.toUpperCase() === "CAROUSEL") {
+            let carouselFieldsDiv = document.createElement("div");
+            carouselFieldsDiv.className = "row g-2 mb-3";
+            carouselFieldsDiv.innerHTML = `
+                <div class="col-md">
+                    <label for="viewContentModalButtonText" class="form-label fw-bold">Button Text</label>
+                    <input type="text" class="modal-body form-control" id="viewContentModalButtonText" disabled value="${val.buttonText || ""}">
+                </div>
+                <div class="col-md">
+                    <label for="viewContentModalButtonHref" class="form-label fw-bold">Button Link / Href</label>
+                    <input type="text" class="modal-body form-control" id="viewContentModalButtonHref" disabled value="${val.buttonHref || ""}">
+                </div>
             `;
-        bodyContainer.appendChild(previewDiv);
+            bodyContainer.appendChild(carouselFieldsDiv);
+        }
 
-        let quoteDiv = document.createElement("div");
-        quoteDiv.innerHTML = `
-                <label for="viewContentModalQuote" class="form-label fw-bold">Quote</label>
-                <textarea class="modal-body form-control" id="viewContentModalQuote" style="height: 4rem" disabled>${val.quote || ""}</textarea>
-            `;
-        bodyContainer.appendChild(quoteDiv);
+        if (val.type.toUpperCase() !== "CAROUSEL") {
+            let previewDiv = document.createElement("div");
+            previewDiv.innerHTML = `
+                    <label for="viewContentModalPreview" class="form-label fw-bold">Short Text (Preview)</label>
+                    <textarea class="modal-body form-control" id="viewContentModalPreview" style="height: 4rem" disabled>${val.previewText || ""}</textarea>
+                `;
+            bodyContainer.appendChild(previewDiv);
+
+            let quoteDiv = document.createElement("div");
+            quoteDiv.innerHTML = `
+                    <label for="viewContentModalQuote" class="form-label fw-bold">Quote</label>
+                    <textarea class="modal-body form-control" id="viewContentModalQuote" style="height: 4rem" disabled>${val.quote || ""}</textarea>
+                `;
+            bodyContainer.appendChild(quoteDiv);
+        }
 
         let contentDiv = document.createElement("div");
         contentDiv.innerHTML = `
@@ -329,13 +349,15 @@ function loadContentInModal(idx) {
             `;
         bodyContainer.appendChild(contentDiv);
 
-        let donationDiv = document.createElement("div");
-        donationDiv.className = "form-check form-switch mt-3";
-        donationDiv.innerHTML = `
-            <input class="form-check-input" type="checkbox" role="switch" id="viewContentModalShowDonation" ${val.showDonation ? "checked" : ""} disabled>
-            <label class="form-check-label fw-bold" for="viewContentModalShowDonation">Show donation option</label>
-        `;
-        bodyContainer.appendChild(donationDiv);
+        if (val.type.toUpperCase() !== "CAROUSEL") {
+            let donationDiv = document.createElement("div");
+            donationDiv.className = "form-check form-switch mt-3";
+            donationDiv.innerHTML = `
+                <input class="form-check-input" type="checkbox" role="switch" id="viewContentModalShowDonation" ${val.showDonation ? "checked" : ""} disabled>
+                <label class="form-check-label fw-bold" for="viewContentModalShowDonation">Show donation option</label>
+            `;
+            bodyContainer.appendChild(donationDiv);
+        }
     }
 
     contentModal.idx = idx;
@@ -348,6 +370,8 @@ function loadContentInModal(idx) {
     contentModal.showDonation = val.showDonation || false;
     contentModal.sevaId = val.seva?.id || "";
     contentModal.sevaSubTypeId = val.sevaSubType?.id || "";
+    contentModal.buttonText = val.buttonText || "";
+    contentModal.buttonHref = val.buttonHref || "";
 
     console.log("contentModal", contentModal);
 }
@@ -526,13 +550,20 @@ function closeContentModal() {
         "viewContentModalShowDonation",
     );
 
+    const buttonTextArea = document.getElementById("viewContentModalButtonText");
+    const buttonHrefArea = document.getElementById("viewContentModalButtonHref");
+
     let hasChanges = false;
-    if (previewArea && contentModal.previewText !== previewArea.value)
+    if (previewArea && (contentModal.previewText || "") !== previewArea.value)
         hasChanges = true;
-    if (fullTextArea && contentModal.fullText !== fullTextArea.value)
+    if (fullTextArea && (contentModal.fullText || "") !== fullTextArea.value)
         hasChanges = true;
-    if (quoteArea && contentModal.quote !== quoteArea.value) hasChanges = true;
+    if (quoteArea && (contentModal.quote || "") !== quoteArea.value) hasChanges = true;
     if (donationSwitch && contentModal.showDonation !== donationSwitch.checked)
+        hasChanges = true;
+    if (buttonTextArea && (contentModal.buttonText || "") !== buttonTextArea.value)
+        hasChanges = true;
+    if (buttonHrefArea && (contentModal.buttonHref || "") !== buttonHrefArea.value)
         hasChanges = true;
 
     if (hasChanges) {
@@ -627,6 +658,9 @@ async function saveContentById(idx, contentId) {
         }
     }
 
+    const buttonTextArea = document.getElementById("viewContentModalButtonText");
+    const buttonHrefArea = document.getElementById("viewContentModalButtonHref");
+
     if (titleNode && contentModal.title !== titleNode.textContent) {
         body.title = titleNode.textContent;
     }
@@ -644,6 +678,12 @@ async function saveContentById(idx, contentId) {
         contentModal.showDonation !== donationSwitch.checked
     ) {
         body.showDonation = donationSwitch.checked;
+    }
+    if (buttonTextArea && contentModal.buttonText !== buttonTextArea.value) {
+        body.buttonText = buttonTextArea.value;
+    }
+    if (buttonHrefArea && contentModal.buttonHref !== buttonHrefArea.value) {
+        body.buttonHref = buttonHrefArea.value;
     }
     
     if (finalSevaId !== contentModal.sevaId) body.sevaId = finalSevaId;
@@ -671,6 +711,8 @@ function popup(idx, json) {
             contentModal.showDonation = json.showDonation;
         if (json.seva) contentModal.sevaId = json.seva.id;
         if (json.sevaSubType) contentModal.sevaSubTypeId = json.sevaSubType.id;
+        if (json.buttonText !== undefined) contentModal.buttonText = json.buttonText;
+        if (json.buttonHref !== undefined) contentModal.buttonHref = json.buttonHref;
 
         loadedContentData[idx] = Object.assign(
             {},

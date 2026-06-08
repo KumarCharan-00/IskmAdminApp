@@ -26,4 +26,6 @@ public class ContentRequest {
     private LocalDate showToDate;
     private String sevaId;
     private String sevaSubTypeId;
+    private String buttonText;
+    private String buttonHref;
 }

@@ -78,6 +78,12 @@ public class Content {
     @JoinColumn(name = "seva_sub_type_id")
     private SevaSubType sevaSubType;
 
+    @Column(name = "button_text")
+    private String buttonText;
+
+    @Column(name = "button_href")
+    private String buttonHref;
+
     @Override
     public final boolean equals(Object o) {
         if (this == o) {
@@ -102,6 +108,6 @@ public class Content {
 
     @Override
     public String toString() {
-        return "Content [id=" + id + ", type=" + type + ", title=" + title + ", quote=" + quote + ", shortText=" + shortText + ", fullText=" + fullText + ", location=" + location + ", showDonation=" + showDonation + ", status=" + status + ", showFromDate=" + showFromDate + ", showToDate=" + showToDate + ", createdAt=" + createdAt + "]";
+        return "Content [id=" + id + ", type=" + type + ", title=" + title + ", quote=" + quote + ", shortText=" + shortText + ", fullText=" + fullText + ", location=" + location + ", showDonation=" + showDonation + ", status=" + status + ", showFromDate=" + showFromDate + ", showToDate=" + showToDate + ", createdAt=" + createdAt + ", buttonText=" + buttonText + ", buttonHref=" + buttonHref + "]";
     }
 }

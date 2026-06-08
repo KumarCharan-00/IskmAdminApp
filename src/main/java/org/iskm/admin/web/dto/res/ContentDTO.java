@@ -31,6 +31,8 @@ public class ContentDTO extends ErrorDTO {
     private List<ImageDTO> images;
     private Seva seva;
     private SevaSubType sevaSubType;
+    private String buttonText;
+    private String buttonHref;
 
     @Data
     @AllArgsConstructor
