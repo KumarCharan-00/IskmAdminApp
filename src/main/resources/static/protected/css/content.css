@@ -1,0 +1,44 @@
+  .btn-subtle-primary {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #444447;
+  }
+
+  .btn-subtle-primary:hover {
+    background-color: #202123;
+    color: white;
+    border: 1px solid #444447;
+  }
+
+  .btn-subtle-primary.active,
+  .btn-subtle-primary:active,
+  .btn-subtle-primary:focus {
+    background-color: #202123;
+    color: white;
+    border: 1px solid #444447;
+  }
+
+  .btn-subtle-success {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #444447;
+  }
+
+  .btn-subtle-success:hover {
+    background-color: #74c59f;
+    color: white;
+    border: 1px solid #444447;
+  }
+
+  .btn-subtle-warning {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #444447;
+  }
+
+  .btn-subtle-warning:hover {
+    background-color: #f1a363;
+    color: black;
+    border: 1px solid #444447;
+  }
+  

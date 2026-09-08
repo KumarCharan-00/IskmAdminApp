@@ -1,92 +1,173 @@
 package org.iskm.admin.web.controller;
 
-import jakarta.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import org.iskm.admin.web.dto.res.AddUserDTO;
 import org.iskm.admin.web.dto.res.ContentDTO;
+import org.iskm.admin.web.dto.res.ContentDTO.ImageDTO;
+import org.iskm.admin.web.dto.res.FetchContentResponse;
 import org.iskm.admin.web.dto.res.Response;
-import org.iskm.admin.web.model.*;
+import org.iskm.admin.web.model.AuthenticationRequest;
+import org.iskm.admin.web.model.AuthenticationResponse;
+import org.iskm.admin.web.model.ContentRequest;
+import org.iskm.admin.web.model.ContentUpdateRequest;
+import org.iskm.admin.web.model.PasswordUpdateRequest;
 import org.iskm.admin.web.service.UserService;
 import org.iskm.admin.web.util.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 public class AdminController {
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
-    
+    private final AuthenticationManager authenticationManager;
+
     private final UserService userService;
-    
-    @Autowired
-    public AdminController(UserService userService) {
+
+    public AdminController(JwtUtil jwtutil, AuthenticationManager authenticationManager, UserService userService) {
+        this.jwtUtil = jwtutil;
+        this.authenticationManager = authenticationManager;
         this.userService = userService;
     }
 
-    @PostMapping("/authenticate/user")
+    @PostMapping("/user/authenticate")
     public ResponseEntity<AuthenticationResponse> authenticateUser(@RequestBody AuthenticationRequest request, HttpServletResponse response) {
-        authenticationManager.authenticate(
+        var authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUserName(), request.getPassword())
         );
-
+        log.info("User authenticated completed :: {}", authentication);
         String token = jwtUtil.generateToken(request.getUserName());
-
+        log.info("Generated token for user: {}", token.substring(0, 5));
         response.addCookie(jwtUtil.generateHttpOnlyCookie(token));
+        log.info("Added cookie for user");
         return ResponseEntity.ok(new AuthenticationResponse(token));
     }
-    
+
     @PostMapping("/user/create")
-    public Response registerUser(@RequestBody AddUserDTO addUserDTO) {
+    public Response registerUser(@RequestBody @NonNull AddUserDTO addUserDTO) {
+        log.info("Registering user: {}", addUserDTO.getUserName());
         return userService.saveUser(addUserDTO);
     }
-    
+
     @PutMapping("/update-password")
-    public ResponseEntity<String> updatePassword(@RequestBody PasswordUpdateRequest request) {
+    public ResponseEntity<String> updatePassword(@RequestBody @NonNull PasswordUpdateRequest request) {
+        log.info("Updating password for user: {}", request.getUserName());
         userService.updatePassword(request.getUserName(), request.getNewPassword());
         return ResponseEntity.ok("Password updated successfully.");
     }
-    
+
     @PostMapping("/content")
-    public ResponseEntity<String> addContent(@ModelAttribute ContentRequest contentRequest) {
-    	userService.saveContent(contentRequest);
-        return ResponseEntity.ok("Content saved successfully");
+    public ResponseEntity<String> addContent(@ModelAttribute @NonNull ContentRequest contentRequest) {
+        contentRequest.setType(contentRequest.getType().toUpperCase());
+        log.info("Adding content: {} of type {}", contentRequest.getTitle(), contentRequest.getType());
+        try {
+            var response = userService.saveContent(contentRequest);
+            if (response instanceof ContentDTO) {
+                return ResponseEntity.ok("Content saved successfully");
+            } else {
+                return ResponseEntity.status(500).body(response.toString());
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Unexpected error: " + e.getMessage());
+        }
     }
-    
+
+    @GetMapping("/public/content")
+    public ResponseEntity<FetchContentResponse> getPublishedContent(
+            @RequestParam(required = false) List<String> type,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) Optional<Integer> k) {
+        log.info("Fetching published content from: {} to: {}", from, to);
+        return getAllContent(type, List.of("published"), from, to, k.or(() -> Optional.of(0)));
+    }
+
     @GetMapping("/content")
-    public ResponseEntity<List<ContentDTO>> getAllContent() {
-        List<ContentDTO> dtos = userService.getAllContent().stream()
-            .map(userService::toContentDTO)
-            .toList();
-        return ResponseEntity.ok(dtos);
-    }
+    public ResponseEntity<FetchContentResponse> getAllContent(
+            @RequestParam(required = false) List<String> type,
+            @RequestParam(required = false) List<String> status,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) Optional<Integer> count) {
+        log.info("Fetching {} {} content from: {} to: {} limit to {}", type, status, from, to, count.orElse(0));
+        LocalDateTime fromDateTime = null;
+        LocalDateTime toDateTime = null;
 
+        if (from != null && !from.trim().isEmpty()) {
+            log.info("From date: {}", from);
+            fromDateTime = LocalDateTime.parse(from + "T00:00:00");
+        }
+        if (to != null && !to.trim().isEmpty()) {
+            log.info("To date: {}", to);
+            toDateTime = LocalDateTime.parse(to + "T23:59:59");
+        }
 
-    @GetMapping("/status/{status}")
-    public ResponseEntity<List<ContentDTO>> getContentByStatus(@PathVariable String status) {
-        List<ContentDTO> dtos = userService.getContentByStatus(status).stream()
+        var response = new FetchContentResponse();
+        var dtoList = userService.getContent(type, status, fromDateTime, toDateTime, count.orElse(0)).stream()
                 .map(userService::toContentDTO)
                 .toList();
-            return ResponseEntity.ok(dtos);
+        var size = dtoList.size();
+        response.setContent(dtoList);
+        response.setCount(size);
+        log.info("Response count: {}", size);
+        return ResponseEntity.ok(response);
     }
-    
-    @PutMapping("/{id}")
-    public ResponseEntity<String> updateContent(@PathVariable Long id,
-                                                    @RequestBody ContentUpdateRequest request) {
-        userService.updateContent(id, request);
-        return ResponseEntity.ok("Content updated successfully");
+
+    @PatchMapping("/content/{id}")
+    public ResponseEntity<ContentDTO> patchContentById(@PathVariable @NonNull String id,
+            @RequestBody @NonNull ContentUpdateRequest request) {
+        log.info("Patching content: {}", id);
+        ContentDTO content = userService.partialUpdateById(id, request);
+        return ResponseEntity.ok(content);
     }
-    
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteContent(@PathVariable Long id) {
-    	userService.deleteContent(id);
+
+    @DeleteMapping("/content/{id}")
+    public ResponseEntity<Void> deleteContent(@PathVariable @NonNull String id) {
+        userService.deleteContent(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/images/{contentId}")
+    public ResponseEntity<List<ImageDTO>> getImagesByContentId(@PathVariable @NonNull String contentId) {
+        List<ImageDTO> images = userService.getImagesByContentId(contentId);
+        if (images.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(images);
+    }
+
+    @DeleteMapping("/images/{imageId}")
+    public ResponseEntity<Void> deleteImage(@PathVariable @NonNull Long imageId) {
+        log.info("Deleting image: {}", imageId);
+        userService.deleteImage(imageId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/images/{contentId}")
+    public ResponseEntity<String> uploadImages(@PathVariable @NonNull String contentId, @RequestParam("images") List<MultipartFile> files) {
+        log.info("Uploading {} images for content: {}", files.size(), contentId);
+        userService.addImagesToContent(contentId, files);
+        return ResponseEntity.ok("Images uploaded successfully");
     }
 }

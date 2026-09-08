@@ -1,5 +1,8 @@
 package org.iskm.admin.web.model;
 
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.AllArgsConstructor;
@@ -8,8 +11,21 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class ContentRequest {
-    private String pageTitle;
-    private String pageContent;
-    private MultipartFile image;
+
+    private String id;
+    private String type;
+    private String title;
+    private String quote;
+    private String shortText;
+    private String fullText;
+    private String location;
+    private Boolean showDonation;
+    private List<MultipartFile> images;
     private String status;
+    private LocalDate showFromDate;
+    private LocalDate showToDate;
+    private String sevaId;
+    private String sevaSubTypeId;
+    private String buttonText;
+    private String buttonHref;
 }

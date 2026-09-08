@@ -1,12 +1,11 @@
 package org.iskm.admin.web.config;
 
-import jakarta.servlet.http.Cookie;
+import java.util.List;
+
 import org.iskm.admin.web.security.JWTAuthenticationSecurityFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -15,16 +14,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
-import org.springframework.transaction.PlatformTransactionManager;
-
-import jakarta.persistence.EntityManagerFactory;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
+import org.springframework.web.cors.CorsConfigurationSource;
 
-import java.util.List;
+import jakarta.servlet.http.Cookie;
 
 @Configuration
 public class SecurityConfig {
@@ -42,12 +37,15 @@ public class SecurityConfig {
     @Bean
     public RequestMatcher excludedPathMatchers() {
         List<String> excludedPaths = List.of(
+                "/",
                 "/login",
-                "/authenticate/user",
+                "/user/authenticate",
+                "/user/create",
                 "/public/**",
                 "/css/**",
                 "/js/**",
-                "/images/**"
+                "/images/**",
+                "/api/**"
         );
 
         PathMatcher pathMatcher = new AntPathMatcher();
@@ -58,33 +56,31 @@ public class SecurityConfig {
         };
     }
 
-
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
         var jwtFilter = new JWTAuthenticationSecurityFilter(excludedPathMatchers());
 
         return http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(req ->
-                        req.requestMatchers(excludedPathMatchers())
-                                .permitAll()
-                                .anyRequest().authenticated()
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
+                .authorizeHttpRequests(req
+                        -> req.requestMatchers(excludedPathMatchers())
+                        .permitAll()
+                        .anyRequest().authenticated()
                 ).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-                .logout(logout ->
-                        logout.logoutUrl("/logout")
-                                .logoutSuccessHandler(
-                                        (request, response, authentication) -> {
-                                            var cookie = new Cookie("login.at", null);
-                                            cookie.setHttpOnly(true);
-                                            cookie.setPath("/");
-                                            cookie.setMaxAge(0);
-                                            response.addCookie(cookie);
-                                        }
-                                ).logoutSuccessUrl("/login")
-                                .permitAll()
+                .logout(logout -> logout.logoutUrl("/logout")
+                .logoutSuccessHandler(
+                        (request, response, authentication) -> {
+                            var cookie = new Cookie("login.at", null);
+                            cookie.setHttpOnly(true);
+                            cookie.setPath("/");
+                            cookie.setMaxAge(0);
+                            response.addCookie(cookie);
+                        }
+                ).logoutSuccessUrl("/login")
+                .permitAll()
                 ).sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .build();
     }
-    
 }
